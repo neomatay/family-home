@@ -1,0 +1,984 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>家</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+XiaoWei&display=swap">
+<style>
+/* 布局概念：家为导航中枢，房间内页单列卡片工具风 */
+:root{
+  --bg:#F6F1E9; --surface:#FFFCF7; --ink:#40382F; --ink2:#8A8072;
+  --line:#E7DECF; --accent:#3E7A66; --warm:#D0832F; --danger:#B85C4A;
+  --h-wall:#F3E8D4; --h-wall2:#E7D8BC; --h-slab:#C39A73; --h-wood:#B08557;
+  --h-fridge:#DCE5E2; --h-frline:#B7C4C0; --h-roof:#C0755B; --h-window:#CBE3EA;
+  --h-bed:#A8C3B5; --h-cat1:#E2A65E; --h-cat2:#9A9AA3; --h-cat3:#F4EEDF;
+  --h-glow:rgba(224,158,63,.16); --h-shadow:rgba(64,56,47,.10); --h-door:#9A6B4F;
+  --dot-on:#D0832F; --dot-mut:#B3A896;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#221F1A; --surface:#2B2721; --ink:#EAE2D6; --ink2:#A29A8C;
+    --line:#3B362D; --accent:#8CC5AF; --warm:#E3B268; --danger:#D98A78;
+    --h-wall:#4A4234; --h-wall2:#3E372C; --h-slab:#6B5741; --h-wood:#6B5741;
+    --h-fridge:#55605C; --h-frline:#6E7B77; --h-roof:#7C493C; --h-window:#3E4A57;
+    --h-bed:#5C7768; --h-cat1:#B58444; --h-cat2:#74747E; --h-cat3:#B9B2A0;
+    --h-glow:rgba(227,178,104,.20); --h-shadow:rgba(0,0,0,.35); --h-door:#6B4A37;
+    --dot-on:#E3B268; --dot-mut:#6E675A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#221F1A; --surface:#2B2721; --ink:#EAE2D6; --ink2:#A29A8C;
+  --line:#3B362D; --accent:#8CC5AF; --warm:#E3B268; --danger:#D98A78;
+  --h-wall:#4A4234; --h-wall2:#3E372C; --h-slab:#6B5741; --h-wood:#6B5741;
+  --h-fridge:#55605C; --h-frline:#6E7B77; --h-roof:#7C493C; --h-window:#3E4A57;
+  --h-bed:#5C7768; --h-cat1:#B58444; --h-cat2:#74747E; --h-cat3:#B9B2A0;
+  --h-glow:rgba(227,178,104,.20); --h-shadow:rgba(0,0,0,.35); --h-door:#6B4A37;
+  --dot-on:#E3B268; --dot-mut:#6E675A;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:max(14px,env(safe-area-inset-top,0px));
+  padding-bottom:max(30px,env(safe-area-inset-bottom,0px));
+  -webkit-tap-highlight-color:transparent;
+}
+.page{max-width:460px;margin-inline:auto}
+.display{font-family:"ZCOOL XiaoWei","Noto Sans SC",serif;font-weight:400}
+button{font-family:inherit}
+
+/* 头部 */
+header{display:flex;align-items:center;gap:10px;margin-bottom:12px;min-height:38px}
+#backBtn{
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center;flex:none;
+}
+#vTitle{font-size:17px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#themeBtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
+#themeBtn svg{width:16px;height:16px}
+#meChip{
+  display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;
+  background:var(--surface);padding:4px 10px 4px 4px;cursor:pointer;font-size:12.5px;flex:none;
+}
+#meChip .av{width:22px;height:22px;border-radius:50%;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.av{border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+
+/* 通用卡片 */
+.card{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:14px 15px}
+.d{width:8px;height:8px;border-radius:50%;background:var(--dot-on);flex:none}
+.d.mut{background:var(--dot-mut)}
+.d.pulse{animation:dotp 2.2s ease-in-out infinite}
+@keyframes dotp{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{
+  border:1px solid var(--accent);background:var(--accent);color:#fff;
+  border-radius:10px;padding:8px 16px;font-size:13.5px;font-weight:500;cursor:pointer;
+}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{padding:5px 12px;font-size:12.5px;border-radius:8px}
+.btn.danger{border-color:var(--danger);background:transparent;color:var(--danger)}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.4;transform:none}
+
+/* 首页 */
+.greet-date{font-size:11.5px;color:var(--ink2);letter-spacing:.5px}
+.greet-title{font-size:21px;margin:3px 0 13px}
+.today{border:1px solid var(--line);border-radius:16px;padding:13px 14px 11px;background:color-mix(in srgb,var(--accent) 6%,var(--surface));margin-bottom:14px;cursor:pointer}
+.today .eyebrow{font-size:10.5px;letter-spacing:2px;color:var(--ink2)}
+.today .row1{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:5px}
+.today .dish{font-size:22px}
+.today .when{font-size:12px;color:var(--ink2);white-space:nowrap}
+.today .when b{color:var(--dot-on);font-weight:500}
+.today .alert{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px}
+.scene svg{display:block;width:100%;height:auto}
+.demo-note{font-size:10.5px;color:var(--ink2);text-align:center;padding:8px 0 2px;letter-spacing:.5px}
+
+/* 房屋 SVG 交互 */
+.hot{cursor:pointer;fill:transparent;outline:none}
+.hot:hover{stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4}
+.hot:focus-visible{stroke:var(--accent);stroke-width:2.5}
+.dim{opacity:.55;filter:saturate(.3)}
+.steam{animation:steam 2.6s ease-in-out infinite}
+.steam.s2{animation-delay:.9s}.steam.s3{animation-delay:1.7s}
+@keyframes steam{0%{opacity:0;transform:translateY(0)}35%{opacity:.55}100%{opacity:0;transform:translateY(-9px)}}
+.smoke{animation:dotp 3.4s ease-in-out infinite}
+.smoke.s2{animation-delay:1.2s}.smoke.s3{animation-delay:2.3s}
+svg text{user-select:none}
+
+/* 房间视图 */
+.view{display:none}
+.view.on{display:block}
+.vhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.vhead .vt{font-size:15px;font-weight:700}
+.vhead .vs{font-size:11.5px;color:var(--ink2);margin-top:2px}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+/* 厨房 */
+.ktab{display:flex;gap:6px;margin-bottom:12px}
+.ktab button{flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:13px;cursor:pointer}
+.ktab button.on{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.dish-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.dish-name{font-size:19px}
+.times{font-size:11px;color:var(--ink2);white-space:nowrap}
+.nutri{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 10px}
+.nutri span{font-size:10.5px;color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:2.5px 8px;background:var(--surface);font-variant-numeric:tabular-nums}
+.nutri .est{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.dish-bot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cooks{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink2)}
+.cooks .av{width:21px;height:21px;font-size:10px}
+.res-date{font-size:11px;color:var(--dot-on);font-weight:700;letter-spacing:1px;margin-bottom:5px}
+.res-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap}
+.res-cook{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2)}
+.res-cook .waiting{color:var(--dot-on);font-weight:500}
+.res-acts{display:flex;gap:8px;margin-left:auto}
+.res-acts .btn{padding:5px 13px;font-size:12px;border-radius:8px}
+.empty{border:1.5px dashed var(--line);border-radius:16px;padding:26px 16px;text-align:center;color:var(--ink2);font-size:13px;line-height:1.8}
+
+/* 冰箱 */
+.igroup{margin-bottom:16px}
+.ig-title{font-size:12px;color:var(--ink2);letter-spacing:2px;margin:0 0 8px 4px}
+.irow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:9px 12px;margin-bottom:7px;cursor:pointer}
+.irow .name{flex:1;min-width:0;font-size:14px;font-weight:500}
+.irow .name .left{display:block;font-size:11px;color:var(--ink2);font-weight:400;margin-top:1px}
+.irow .name .left.low{color:var(--dot-on)}
+.step{display:flex;align-items:center;gap:7px;flex:none}
+.step button{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:15px;cursor:pointer;line-height:1}
+.step b{font-size:13.5px;min-width:22px;text-align:center;font-variant-numeric:tabular-nums}
+.step .unit{font-size:11px;color:var(--ink2)}
+
+/* 购物清单 */
+.lrow{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:11px 13px;margin-bottom:7px}
+.lrow .ck{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:transparent;cursor:pointer;flex:none;padding:0}
+.lrow.done .ck{background:var(--accent);border-color:var(--accent)}
+.lrow.done .lname{text-decoration:line-through;color:var(--ink2)}
+.lname{flex:1;min-width:0;font-size:14px;font-weight:500}
+.lname .note{display:block;font-size:11px;color:var(--ink2);font-weight:400;margin-top:1px}
+.lrow .x{width:26px;height:26px;border:none;background:none;color:var(--ink2);font-size:14px;cursor:pointer;flex:none}
+.clrbar{display:flex;justify-content:flex-end;margin-top:4px}
+
+/* 底部弹层 */
+#mask{position:fixed;inset:0;background:rgba(30,25,18,.45);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+#mask.on{opacity:1;pointer-events:auto}
+#sheet{
+  position:fixed;left:50%;bottom:0;transform:translateX(-50%) translateY(105%);
+  width:min(100vw,460px);max-height:86vh;overflow-y:auto;
+  background:var(--surface);border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));
+  transition:transform .26s cubic-bezier(.3,.9,.4,1);z-index:41;
+  padding-left:max(18px,calc(env(safe-area-inset-left,0px) + 8px));
+  padding-right:max(18px,calc(env(safe-area-inset-right,0px) + 8px));
+}
+#sheet.on{transform:translateX(-50%) translateY(0)}
+.sh-title{font-size:17px;font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.sh-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink2);cursor:pointer;font-size:13px}
+.flabel{font-size:11.5px;color:var(--ink2);margin:12px 0 6px;letter-spacing:.5px}
+.finput,select.finput{
+  width:100%;border:1px solid var(--line);border-radius:11px;background:var(--bg);
+  color:var(--ink);font-size:14.5px;padding:10px 12px;font-family:inherit;outline:none;
+}
+.finput:focus{border-color:var(--accent)}
+.frow{display:flex;gap:8px}
+.frow .finput{flex:1;min-width:0}
+.ingrow{display:flex;gap:7px;margin-bottom:7px;align-items:center}
+.ingrow .n{flex:2.2;min-width:0}
+.ingrow .q{flex:1;min-width:0}
+.ingrow .u{flex:1;min-width:0}
+.ingrow .rm{width:30px;height:38px;border:none;background:none;color:var(--ink2);font-size:16px;cursor:pointer;flex:none}
+.seg2{display:flex;gap:6px}
+.seg2 button{flex:1;padding:8px 2px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:12.5px;cursor:pointer}
+.seg2 button.on{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.mchips{display:flex;gap:8px;flex-wrap:wrap}
+.mchip{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:5px 13px 5px 6px;background:var(--surface);cursor:pointer;font-size:13px}
+.mchip.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.mchip .av{width:23px;height:23px;font-size:11px}
+.sh-actions{display:flex;gap:9px;margin-top:18px}
+.sh-actions .btn{flex:1;padding:11px 0;font-size:14px}
+.hint{font-size:11px;color:var(--ink2);line-height:1.7;margin-top:9px}
+.nutri-edit{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.nutri-edit .finput{padding:8px 6px;font-size:13px;text-align:center}
+.nutri-edit label{display:block;font-size:10px;color:var(--ink2);text-align:center;margin-bottom:4px}
+
+/* toast */
+#toast{
+  position:fixed;left:50%;bottom:calc(78px + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%) translateY(8px);max-width:min(86vw,420px);
+  background:var(--ink);color:var(--bg);font-size:12.5px;line-height:1.6;
+  padding:10px 16px;border-radius:12px;opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;box-shadow:0 6px 24px rgba(0,0,0,.18);z-index:60;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (prefers-reduced-motion:reduce){.steam,.smoke,.d.pulse{animation:none}}
+</style>
+
+<div class="page">
+  <header>
+    <button id="backBtn" hidden>←</button>
+    <div id="vTitle">家</div>
+    <div id="meChip"></div>
+    <button id="themeBtn" aria-label="切换明暗主题">
+      <svg id="icoSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3 19 19M19 5l-1.7 1.7M6.7 17.3 5 19"/></svg>
+      <svg id="icoMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/></svg>
+    </button>
+  </header>
+
+  <!-- ============ 首页 · 家 ============ -->
+  <section class="view on" id="v-home">
+    <div class="greet-date" id="greetDate"></div>
+    <div class="greet-title display" id="greetTitle"></div>
+    <div class="today" id="todayCard"></div>
+    <div class="scene">
+      <svg viewBox="0 0 360 452" role="img" aria-label="剖面小家：一层厨房、猫角、玄关，二层卧室和书房">
+        <ellipse cx="180" cy="430" rx="172" ry="9" fill="var(--h-shadow)"/>
+        <rect x="248" y="60" width="24" height="50" fill="var(--h-slab)"/>
+        <rect x="244" y="55" width="32" height="7" rx="3" fill="var(--h-wood)"/>
+        <circle class="smoke" cx="260" cy="46" r="4" fill="var(--ink2)"/>
+        <circle class="smoke s2" cx="266" cy="34" r="5" fill="var(--ink2)"/>
+        <circle class="smoke s3" cx="258" cy="22" r="6" fill="var(--ink2)"/>
+        <polygon points="18,158 180,54 342,158" fill="var(--h-roof)"/>
+        <rect x="10" y="152" width="340" height="10" rx="4" fill="var(--h-roof)"/>
+        <circle cx="180" cy="118" r="12" fill="var(--h-window)" stroke="var(--h-wood)" stroke-width="2.5"/>
+        <path d="M168 118h24M180 106v24" stroke="var(--h-wood)" stroke-width="1.5"/>
+        <rect x="18" y="158" width="12" height="254" fill="var(--h-wall2)"/>
+        <rect x="330" y="158" width="12" height="254" fill="var(--h-wall2)"/>
+        <!-- 二层 -->
+        <rect x="30" y="158" width="165" height="122" fill="var(--h-wall)"/>
+        <rect x="195" y="158" width="8" height="122" fill="var(--h-wall2)"/>
+        <rect x="203" y="158" width="127" height="122" fill="var(--h-wall)"/>
+        <rect x="40" y="196" width="6" height="82" rx="2" fill="var(--h-wood)"/>
+        <rect x="46" y="250" width="84" height="28" rx="5" fill="var(--h-wood)"/>
+        <rect x="46" y="228" width="84" height="24" rx="7" fill="var(--h-bed)"/>
+        <rect x="88" y="228" width="42" height="24" rx="7" fill="var(--h-bed)"/>
+        <rect x="46" y="228" width="44" height="24" rx="7" fill="var(--h-cat3)"/>
+        <rect x="52" y="216" width="30" height="14" rx="6" fill="var(--h-cat3)"/>
+        <circle cx="109" cy="224" r="7" fill="var(--h-cat3)"/>
+        <path d="M104 219l-2-5 4 2zM114 219l2-5-4 2z" fill="var(--h-cat3)"/>
+        <rect x="120" y="176" width="34" height="30" rx="4" fill="var(--h-window)" stroke="var(--h-wood)" stroke-width="2"/>
+        <path d="M137 176v30M120 191h34" stroke="var(--h-wood)" stroke-width="1.2"/>
+        <ellipse cx="75" cy="274" rx="26" ry="5" fill="var(--h-wall2)"/>
+        <rect x="150" y="262" width="30" height="12" rx="3" fill="var(--h-fridge)"/>
+        <rect x="157" y="264" width="16" height="3" rx="1.5" fill="var(--h-frline)"/>
+        <rect x="134" y="252" width="22" height="26" rx="3" fill="var(--h-wood)"/>
+        <circle cx="145" cy="248" r="5" fill="var(--warm)"/>
+        <g class="dim">
+          <rect x="220" y="250" width="74" height="7" rx="2" fill="#8E857A"/>
+          <rect x="224" y="257" width="5" height="21" fill="#8E857A"/>
+          <rect x="285" y="257" width="5" height="21" fill="#8E857A"/>
+          <rect x="240" y="238" width="2" height="12" fill="#8E857A"/>
+          <path d="M234 238h14l-7-8z" fill="#8E857A"/>
+          <rect x="292" y="192" width="28" height="66" rx="3" fill="#8E857A"/>
+          <path d="M292 214h28M292 236h28" stroke="var(--surface)" stroke-width="2"/>
+        </g>
+        <rect x="212" y="206" width="88" height="20" rx="10" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="256" y="220" text-anchor="middle" font-size="9.5" fill="var(--ink2)">还没有整理好</text>
+        <rect x="18" y="280" width="324" height="12" fill="var(--h-slab)"/>
+        <!-- 一层 -->
+        <rect x="30" y="292" width="160" height="120" fill="var(--h-wall)"/>
+        <rect x="190" y="292" width="8" height="120" fill="var(--h-wall2)"/>
+        <rect x="198" y="292" width="62" height="120" fill="var(--h-wall)"/>
+        <rect x="260" y="292" width="8" height="120" fill="var(--h-wall2)"/>
+        <rect x="268" y="292" width="62" height="120" fill="var(--h-wall)"/>
+        <rect x="30" y="292" width="160" height="120" fill="var(--h-glow)"/>
+        <path d="M100 292v10" stroke="var(--h-wood)" stroke-width="2"/>
+        <path d="M92 302h16l-8 10z" fill="var(--h-wood)"/>
+        <circle id="dotKitchen" cx="100" cy="317" r="4" fill="var(--dot-on)" style="animation:dotp 2.2s ease-in-out infinite"/>
+        <rect x="38" y="348" width="84" height="8" rx="3" fill="var(--h-slab)"/>
+        <rect x="42" y="356" width="76" height="48" rx="4" fill="var(--h-wood)"/>
+        <rect x="50" y="364" width="26" height="32" rx="3" fill="var(--h-wall2)"/>
+        <rect x="86" y="364" width="26" height="32" rx="3" fill="var(--h-wall2)"/>
+        <rect x="56" y="332" width="26" height="16" rx="4" fill="#5A6B66"/>
+        <rect x="64" y="328" width="10" height="4" rx="2" fill="#5A6B66"/>
+        <path class="steam" d="M62 322q3-4 0-7" stroke="var(--ink2)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path class="steam s2" d="M69 324q3-4 0-7" stroke="var(--ink2)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path class="steam s3" d="M76 322q3-4 0-7" stroke="var(--ink2)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <rect x="122" y="312" width="44" height="4" rx="2" fill="var(--h-wood)"/>
+        <rect x="126" y="302" width="9" height="10" rx="2" fill="var(--h-bed)"/>
+        <rect x="139" y="304" width="8" height="8" rx="2" fill="var(--warm)"/>
+        <rect x="122" y="336" width="22" height="22" rx="3" fill="var(--h-window)" stroke="var(--h-wood)" stroke-width="2"/>
+        <rect x="150" y="300" width="34" height="104" rx="6" fill="var(--h-fridge)"/>
+        <path d="M150 336h34" stroke="var(--h-frline)" stroke-width="2"/>
+        <rect x="154" y="308" width="3" height="16" rx="1.5" fill="var(--h-frline)"/>
+        <rect x="154" y="342" width="3" height="14" rx="1.5" fill="var(--h-frline)"/>
+        <g id="fridgeBadge" style="display:none">
+          <circle cx="176" cy="296" r="9" fill="var(--warm)"/>
+          <text id="fridgeBadgeN" x="176" y="299.5" text-anchor="middle" font-size="9" font-weight="700" fill="var(--surface)">2</text>
+        </g>
+        <rect x="226" y="316" width="8" height="72" fill="var(--h-wood)"/>
+        <rect x="206" y="310" width="40" height="6" rx="3" fill="var(--h-wood)"/>
+        <rect x="208" y="352" width="32" height="5" rx="2.5" fill="var(--h-wood)"/>
+        <ellipse cx="230" cy="298" rx="13" ry="14" fill="var(--h-cat1)"/>
+        <circle cx="230" cy="280" r="8" fill="var(--h-cat1)"/>
+        <path d="M224 275l-2-6 5 3zM236 275l2-6-5 3z" fill="var(--h-cat1)"/>
+        <path d="M241 304q8 2 4-8" stroke="var(--h-cat1)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="236" cy="384" rx="16" ry="7" fill="var(--h-wall2)"/>
+        <circle cx="236" cy="375" r="10" fill="var(--h-cat2)"/>
+        <path d="M230 368l-2-4 4 1zM242 368l2-4-4 1z" fill="var(--h-cat2)"/>
+        <ellipse cx="210" cy="398" rx="8" ry="3.5" fill="var(--h-roof)"/>
+        <ellipse cx="224" cy="398" rx="8" ry="3.5" fill="#7A8FA0"/>
+        <rect x="286" y="316" width="44" height="84" rx="5" fill="var(--h-door)"/>
+        <circle cx="323" cy="358" r="2.5" fill="var(--h-slab)"/>
+        <rect x="282" y="402" width="52" height="6" rx="3" fill="var(--h-roof)"/>
+        <polygon points="272,368 284,368 282,404 274,404" fill="var(--h-slab)"/>
+        <path d="M275 368q3-6 6 0" stroke="var(--h-slab)" stroke-width="2" fill="none"/>
+        <g id="doorBadge" style="display:none">
+          <circle cx="278" cy="362" r="7" fill="var(--warm)"/>
+          <text id="doorBadgeN" x="278" y="365.5" text-anchor="middle" font-size="8" font-weight="700" fill="var(--surface)">2</text>
+        </g>
+        <rect x="14" y="412" width="332" height="14" rx="3" fill="var(--h-slab)"/>
+        <g font-size="10.5" fill="var(--ink2)" letter-spacing="1.5">
+          <text x="38" y="308">卧室</text>
+          <text x="214" y="308">书房</text>
+          <text x="38" y="326">厨房</text>
+          <text x="206" y="328">猫角</text>
+          <text x="274" y="328">玄关</text>
+        </g>
+        <circle id="dotCat" cx="248" cy="324.5" r="3.5" fill="var(--dot-on)" style="animation:dotp 2.2s ease-in-out infinite"/>
+        <circle id="dotBed" cx="55" cy="180" r="3.5" fill="var(--dot-mut)"/>
+        <!-- 热区 -->
+        <rect class="hot" data-nav="soon" data-room="bed" x="30" y="158" width="165" height="122" rx="10" tabindex="0" aria-label="卧室"/>
+        <rect class="hot" data-nav="soon" data-room="study" x="203" y="158" width="127" height="122" rx="10" tabindex="0" aria-label="书房"/>
+        <rect class="hot" data-nav="kitchen" x="30" y="292" width="160" height="120" rx="10" tabindex="0" aria-label="厨房"/>
+        <rect class="hot" data-nav="fridge" x="148" y="288" width="40" height="124" rx="10" tabindex="0" aria-label="冰箱"/>
+        <rect class="hot" data-nav="soon" data-room="cat" x="198" y="292" width="62" height="120" rx="10" tabindex="0" aria-label="猫角"/>
+        <rect class="hot" data-nav="list" x="268" y="292" width="62" height="120" rx="10" tabindex="0" aria-label="玄关"/>
+      </svg>
+    </div>
+    <div class="demo-note">点房间进入 · 圆点 = 有事发生 · v0.1 数据存在本机</div>
+  </section>
+
+  <!-- ============ 厨房 ============ -->
+  <section class="view" id="v-kitchen">
+    <div class="vhead">
+      <div><div class="vt">家庭餐厅</div><div class="vs">上架学会的菜 · 预定今晚吃什么</div></div>
+      <button class="btn small" data-act="newDish">上架新菜</button>
+    </div>
+    <div class="ktab">
+      <button data-tab="menu" class="on">菜单</button>
+      <button data-tab="res">预定</button>
+    </div>
+    <div class="stack" id="kitchenBody"></div>
+  </section>
+
+  <!-- ============ 冰箱与库存 ============ -->
+  <section class="view" id="v-fridge">
+    <div class="vhead">
+      <div><div class="vt">冰箱与库存</div><div class="vs">食材 · 日用品 · 猫用</div></div>
+      <button class="btn small" data-act="newInv">添加</button>
+    </div>
+    <div id="fridgeBody"></div>
+  </section>
+
+  <!-- ============ 购物清单 ============ -->
+  <section class="view" id="v-list">
+    <div class="vhead">
+      <div><div class="vt">购物清单</div><div class="vs">缺什么 · 买完勾掉</div></div>
+      <button class="btn small" data-act="newShop">添加</button>
+    </div>
+    <div id="listBody"></div>
+    <div class="clrbar"><button class="btn ghost small" data-act="clearShop">清掉已购</button></div>
+  </section>
+</div>
+
+<div id="mask"></div>
+<div id="sheet" role="dialog" aria-modal="true"></div>
+<div id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- 状态 ---------- */
+var LS_KEY='jia-v0.1';
+var S=null;
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function member(id){for(var i=0;i<S.members.length;i++)if(S.members[i].id===id)return S.members[i];return null}
+function dish(id){for(var i=0;i<S.dishes.length;i++)if(S.dishes[i].id===id)return S.dishes[i];return null}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(_){}}
+
+function seed(){
+  var d1=uid(),d2=uid(),d3=uid();
+  return {
+    members:[
+      {id:1,name:'成员一',color:'#D0832F'},
+      {id:2,name:'成员二',color:'#3E7A66'}
+    ],
+    me:1,
+    dishes:[
+      {id:d1,name:'番茄牛腩',servings:2,by:1,cooks:[1,2],times:3,est:true,
+        ingredients:[{name:'牛腩',qty:600,unit:'克'},{name:'番茄',qty:300,unit:'克'},{name:'洋葱',qty:100,unit:'克'},{name:'姜',qty:15,unit:'克'}],
+        nutri:{k:520,p:38,c:24,f:28}},
+      {id:d2,name:'番茄炒蛋',servings:2,by:2,cooks:[1],times:1,est:true,
+        ingredients:[{name:'鸡蛋',qty:3,unit:'个'},{name:'番茄',qty:200,unit:'克'},{name:'小葱',qty:10,unit:'克'}],
+        nutri:{k:285,p:15,c:12,f:18}},
+      {id:d3,name:'葱油拌面',servings:2,by:2,cooks:[2],times:5,est:true,
+        ingredients:[{name:'面条',qty:200,unit:'克'},{name:'小葱',qty:20,unit:'克'},{name:'生抽',qty:15,unit:'毫升'},{name:'食用油',qty:15,unit:'毫升'}],
+        nutri:{k:430,p:11,c:62,f:14}}
+    ],
+    inv:[
+      {id:uid(),name:'牛腩',cat:'food',qty:0,unit:'克',low:300},
+      {id:uid(),name:'鸡蛋',cat:'food',qty:3,unit:'个',low:4},
+      {id:uid(),name:'番茄',cat:'food',qty:250,unit:'克',low:200},
+      {id:uid(),name:'洋葱',cat:'food',qty:150,unit:'克',low:100},
+      {id:uid(),name:'小葱',cat:'food',qty:0,unit:'克',low:20},
+      {id:uid(),name:'洗衣液',cat:'daily',qty:1,unit:'瓶',low:2},
+      {id:uid(),name:'卫生纸',cat:'daily',qty:4,unit:'卷',low:2},
+      {id:uid(),name:'猫粮',cat:'cat',qty:800,unit:'克',low:1000},
+      {id:uid(),name:'猫砂',cat:'cat',qty:6,unit:'千克',low:2}
+    ],
+    res:[
+      {id:uid(),dishId:d1,date:isoAdd(0),time:'18:30',cook:null}
+    ],
+    shop:[
+      {id:uid(),name:'牛腩',note:'来自 番茄牛腩',done:false}
+    ],
+    ui:{view:'home',ktab:'menu'}
+  };
+}
+
+function isoAdd(days){
+  var d=new Date();d.setDate(d.getDate()+days);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function todayIso(){return isoAdd(0)}
+function dateLabel(iso){
+  if(iso===todayIso())return '今天';
+  if(iso===isoAdd(1))return '明天';
+  var d=new Date(iso+'T12:00:00');
+  return (d.getMonth()+1)+'月'+d.getDate()+'日';
+}
+
+function load(){
+  try{
+    var raw=localStorage.getItem(LS_KEY);
+    if(raw){S=JSON.parse(raw);if(S&&S.dishes)return}
+  }catch(_){}
+  S=seed();save();
+}
+load();
+
+/* ---------- toast ---------- */
+var toastEl=document.getElementById('toast'),tid;
+function toast(t){
+  toastEl.textContent=t;toastEl.classList.add('show');
+  clearTimeout(tid);tid=setTimeout(function(){toastEl.classList.remove('show')},2400);
+}
+
+/* ---------- 营养估算（本地食物库 · 正式版换真实AI） ---------- */
+var FOOD={
+  '牛腩':[332,26,0,23],'番茄':[18,0.9,3.9,0.2],'洋葱':[40,1.1,9,0.1],'姜':[46,1,10,0.5],
+  '蒜':[128,6,28,0.5],'小葱':[30,1.7,5,0.3],'大葱':[30,1.7,6,0.1],'鸡蛋':[144,13,2,10],
+  '面条':[350,11,75,1],'米饭':[116,2.6,26,0.3],'土豆':[77,2,17,0.1],'五花肉':[568,7,0,53],
+  '鸡胸肉':[118,24,0,2],'鸡腿':[181,16,0,13],'排骨':[278,17,0,20],'虾':[93,18,2,0.8],
+  '三文鱼':[139,17,0,8],'豆腐':[80,8,2,4],'白菜':[17,1.2,2,0.2],'青椒':[22,1,5,0.3],
+  '胡萝卜':[39,0.9,9,0.2],'香菇':[34,2,5,0.3],'牛奶':[65,3.4,5,3.9],'南瓜':[23,1,5,0.1],
+  '苹果':[52,0.3,14,0.2],'糖':[400,0,100,0],'食用油':[884,0,0,100],'生抽':[63,8,5,0],
+  '醋':[31,0,2,0],'盐':[0,0,0,0],'蚝油':[114,5,8,2],'料酒':[106,0,0,0]
+};
+var UNIT_G={'克':1,'g':1,'毫升':1,'ml':1,'个':55,'只':55,'根':60,'片':8,'勺':12,'瓣':4,'适量':25,'少许':8,'千克':1000,'瓶':500,'罐':200,'包':100,'块':80};
+var DEF=[120,7,10,5];
+function estimate(ings,servings){
+  var k=0,p=0,c=0,f=0,unknown=0;
+  ings.forEach(function(ing){
+    var db=FOOD[String(ing.name||'').trim()];
+    if(!db){db=DEF;unknown++}
+    var g=(parseFloat(ing.qty)||0)*(UNIT_G[ing.unit]||1);
+    k+=db[0]*g/100;p+=db[1]*g/100;c+=db[2]*g/100;f+=db[3]*g/100;
+  });
+  var sv=Math.max(1,servings||1);
+  return {k:Math.round(k/sv),p:Math.round(p/sv),c:Math.round(c/sv),f:Math.round(f/sv),unknown:unknown};
+}
+
+/* ---------- 库存比对 ---------- */
+function gramsOf(qty,unit){return (parseFloat(qty)||0)*(UNIT_G[unit]||1)}
+function checkInv(d){
+  var missing=[];
+  (d.ingredients||[]).forEach(function(ing){
+    var needG=gramsOf(ing.qty,ing.unit),name=String(ing.name||'').trim();
+    var item=null;
+    S.inv.forEach(function(it){if(it.cat==='food'&&it.name===name)item=it});
+    var haveG=item?gramsOf(item.qty,item.unit):0;
+    if(haveG<needG){
+      var dupe=false;
+      S.shop.forEach(function(s){if(!s.done&&s.name===name)dupe=true});
+      if(!dupe)S.shop.push({id:uid(),name:name,note:'来自 '+d.name,done:false});
+      missing.push(name);
+    }
+  });
+  return missing;
+}
+function lowCount(cat){
+  var n=0;S.inv.forEach(function(it){if(it.cat===cat&&it.qty<it.low)n++});return n;
+}
+function openRes(){
+  return S.res.slice().sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time)});
+}
+
+/* ---------- 渲染 ---------- */
+var TITLES={home:'家',kitchen:'厨房 · 家庭餐厅',fridge:'冰箱与库存',list:'购物清单'};
+function render(){
+  ['home','kitchen','fridge','list'].forEach(function(v){
+    document.getElementById('v-'+v).classList.toggle('on',S.ui.view===v);
+  });
+  document.getElementById('vTitle').textContent=TITLES[S.ui.view];
+  document.getElementById('backBtn').hidden=(S.ui.view==='home');
+  renderMeChip();
+  if(S.ui.view==='home')renderHome();
+  if(S.ui.view==='kitchen')renderKitchen();
+  if(S.ui.view==='fridge')renderFridge();
+  if(S.ui.view==='list')renderList();
+  save();
+}
+
+function avHtml(m,size){
+  return '<span class="av" style="background:'+m.color+';width:'+size+'px;height:'+size+'px;font-size:'+Math.round(size*0.48)+'px">'+esc(m.name.slice(0,1))+'</span>';
+}
+function renderMeChip(){
+  var m=member(S.me)||S.members[0];
+  document.getElementById('meChip').innerHTML=avHtml(m,22)+'<span>'+esc(m.name)+'</span>';
+}
+
+function renderHome(){
+  var h=new Date().getHours();
+  var greet=h<5?'夜深了':h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好';
+  var wd=['日','一','二','三','四','五','六'][new Date().getDay()];
+  var d=new Date();
+  document.getElementById('greetDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 周'+wd+' · '+greet;
+  document.getElementById('greetTitle').textContent=S.members.map(function(m){return m.name}).join(' 和 ')+'的家';
+
+  var res=openRes()[0];
+  var tc=document.getElementById('todayCard');
+  if(res){
+    var di=dish(res.dishId);
+    var cook=res.cook?member(res.cook):null;
+    tc.innerHTML=
+      '<div class="eyebrow">今晚吃什么</div>'+
+      '<div class="row1"><div class="dish display">'+esc(di?di.name:'?')+'</div>'+
+      '<div class="when">'+dateLabel(res.date)+' '+esc(res.time)+' · <b>'+(cook?esc(cook.name)+'做':'待接单')+'</b></div></div>';
+  }else{
+    tc.innerHTML='<div class="eyebrow">今晚吃什么</div><div class="row1"><div class="dish display" style="font-size:17px;color:var(--ink2)">还没定 · 去菜单里挑一道？</div></div>';
+  }
+  var shopN=S.shop.filter(function(s){return !s.done}).length;
+  var lowFood=lowCount('food');
+  var lowCat=lowCount('cat');
+  var alerts=[];
+  if(shopN)alerts.push('购物清单 '+shopN+' 项');
+  if(lowFood)alerts.push('冰箱 '+lowFood+' 样快没了');
+  if(alerts.length)tc.innerHTML+='<div class="alert"><span class="d pulse"></span><span>'+alerts.join(' · ')+'</span></div>';
+
+  var hasResToday=res&&(res.date===todayIso()||res.date===isoAdd(1));
+  document.getElementById('dotKitchen').style.display=hasResToday?'':'none';
+  var fb=document.getElementById('fridgeBadge');
+  if(lowFood>0){fb.style.display='';document.getElementById('fridgeBadgeN').textContent=lowFood}
+  else fb.style.display='none';
+  var db=document.getElementById('doorBadge');
+  if(shopN>0){db.style.display='';document.getElementById('doorBadgeN').textContent=shopN}
+  else db.style.display='none';
+  document.getElementById('dotCat').style.display=lowCat>0?'':'none';
+}
+
+function renderKitchen(){
+  document.querySelectorAll('.ktab button').forEach(function(b){
+    b.classList.toggle('on',b.dataset.tab===S.ui.ktab);
+  });
+  var body=document.getElementById('kitchenBody');
+  if(S.ui.ktab==='menu'){
+    if(!S.dishes.length){
+      body.innerHTML='<div class="empty">菜单还是空的<br>学会一道菜，就上架一道</div>';
+      return;
+    }
+    body.innerHTML=S.dishes.map(function(d){
+      var n=d.nutri||{};
+      var cooks=d.cooks.map(function(id){var m=member(id);return m?avHtml(m,21):''}).join('');
+      return '<div class="card" data-act="editDish" data-id="'+d.id+'">'+
+        '<div class="dish-top"><div class="dish-name display">'+esc(d.name)+'</div><div class="times">做过 '+d.times+' 次</div></div>'+
+        '<div class="nutri">'+
+          '<span>≈ '+n.k+' kcal</span><span>蛋白 '+n.p+'g</span><span>碳水 '+n.c+'g</span><span>脂肪 '+n.f+'g</span>'+
+          (d.est?'<span class="est">估算</span>':'')+
+        '</div>'+
+        '<div class="dish-bot"><div class="cooks">会做 '+cooks+'</div>'+
+        '<button class="btn small" data-act="res" data-id="'+d.id+'">预定</button></div></div>';
+    }).join('');
+  }else{
+    var list=openRes();
+    if(!list.length){
+      body.innerHTML='<div class="empty">近期没有预定<br>去菜单里挑一道，选个时间</div>';
+      return;
+    }
+    body.innerHTML=list.map(function(r){
+      var di=dish(r.dishId);
+      if(!di)return '';
+      var cook=r.cook?member(r.cook):null;
+      var cookHtml=cook
+        ?'<span class="res-cook">'+avHtml(cook,21)+esc(cook.name)+' 做</span>'
+        :'<span class="res-cook"><span class="waiting">待接单</span><button class="btn ghost small" data-act="take" data-id="'+r.id+'">我来做</button></span>';
+      return '<div class="card">'+
+        '<div class="res-date">'+dateLabel(r.date)+' · '+esc(r.time)+'</div>'+
+        '<div class="dish-name display">'+esc(di.name)+'</div>'+
+        '<div class="res-row">'+cookHtml+
+        '<span class="res-acts"><button class="btn small" data-act="cooked" data-id="'+r.id+'">做好了</button>'+
+        '<button class="btn danger small" data-act="cancelRes" data-id="'+r.id+'">取消</button></span></div></div>';
+    }).join('');
+  }
+}
+
+var CATS=[['food','冰箱 · 食材'],['daily','家里 · 日用品'],['cat','猫角 · 猫用']];
+function renderFridge(){
+  var html='';
+  CATS.forEach(function(c){
+    var items=S.inv.filter(function(it){return it.cat===c[0]});
+    html+='<div class="igroup"><div class="ig-title">'+c[1]+'</div>';
+    if(!items.length)html+='<div class="empty" style="padding:14px">还没有记录</div>';
+    items.forEach(function(it){
+      var low=it.qty<it.low;
+      html+='<div class="irow" data-act="editInv" data-id="'+it.id+'">'+
+        (low?'<span class="d pulse"></span>':'<span class="d mut"></span>')+
+        '<div class="name">'+esc(it.name)+'<span class="left'+(low?' low':'')+'">'+(low?'快没了 · 剩 ':'剩 ')+it.qty+' '+esc(it.unit)+'</span></div>'+
+        '<div class="step" data-stop="1">'+
+          '<button data-act="step" data-id="'+it.id+'" data-d="-1">−</button><b>'+it.qty+'</b>'+
+          '<button data-act="step" data-id="'+it.id+'" data-d="1">＋</button><span class="unit">'+esc(it.unit)+'</span>'+
+        '</div></div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('fridgeBody').innerHTML=html;
+}
+
+function renderList(){
+  var html='';
+  var items=S.shop.slice().sort(function(a,b){return (a.done?1:0)-(b.done?1:0)});
+  if(!items.length)html='<div class="empty">清单是空的<br>预定菜时缺的原料会自动出现在这里</div>';
+  items.forEach(function(s){
+    html+='<div class="lrow'+(s.done?' done':'')+'">'+
+      '<button class="ck" data-act="shopToggle" data-id="'+s.id+'" aria-label="勾选"></button>'+
+      '<div class="lname">'+esc(s.name)+(s.note?'<span class="note">'+esc(s.note)+'</span>':'')+'</div>'+
+      '<button class="x" data-act="shopDel" data-id="'+s.id+'" aria-label="删除">✕</button></div>';
+  });
+  document.getElementById('listBody').innerHTML=html;
+}
+
+/* ---------- 弹层 ---------- */
+var mask=document.getElementById('mask'),sheet=document.getElementById('sheet');
+function openSheet(html){
+  sheet.innerHTML=html;mask.classList.add('on');sheet.classList.add('on');
+}
+function closeSheet(){
+  mask.classList.remove('on');sheet.classList.remove('on');
+}
+mask.addEventListener('click',closeSheet);
+
+function shHead(title){
+  return '<div class="sh-title"><span>'+title+'</span><button class="sh-close" data-act="closeSheet">✕</button></div>';
+}
+function ingRowHtml(ing){
+  return '<div class="ingrow">'+
+    '<input class="finput n" placeholder="食材" value="'+esc(ing.name)+'">'+
+    '<input class="finput q" type="number" inputmode="decimal" placeholder="数量" value="'+esc(ing.qty)+'">'+
+    '<input class="finput u" placeholder="克/个" value="'+esc(ing.unit)+'">'+
+    '<button class="rm" data-act="rmIng">✕</button></div>';
+}
+
+function dishSheet(id){
+  var d=id?dish(id):null;
+  var ings=d?d.ingredients:[{name:'',qty:'',unit:'克'}];
+  var cooks=d?d.cooks.slice():[S.me];
+  openSheet(shHead(d?'编辑菜品':'上架新菜')+
+    '<div class="flabel">菜名</div><input class="finput" id="dName" value="'+esc(d?d.name:'')+'" placeholder="比如：番茄牛腩">'+
+    '<div class="flabel">材料（做什么用多少）</div><div id="ingRows">'+
+    ings.map(ingRowHtml).join('')+'</div>'+
+    '<button class="btn ghost small" data-act="addIng">＋ 加一样食材</button>'+
+    '<div class="flabel">几人份</div><input class="finput" id="dServ" type="number" inputmode="numeric" value="'+(d?d.servings:2)+'" style="max-width:120px">'+
+    '<div class="flabel">营养（每份 · 点估算自动填，可手改）</div>'+
+    '<div class="nutri-edit">'+
+      '<div><label>热量 kcal</label><input class="finput" id="nK" type="number" inputmode="numeric" value="'+(d&&d.nutri?d.nutri.k:'')+'"></div>'+
+      '<div><label>蛋白 g</label><input class="finput" id="nP" type="number" inputmode="numeric" value="'+(d&&d.nutri?d.nutri.p:'')+'"></div>'+
+      '<div><label>碳水 g</label><input class="finput" id="nC" type="number" inputmode="numeric" value="'+(d&&d.nutri?d.nutri.c:'')+'"></div>'+
+      '<div><label>脂肪 g</label><input class="finput" id="nF" type="number" inputmode="numeric" value="'+(d&&d.nutri?d.nutri.f:'')+'"></div>'+
+    '</div>'+
+    '<div style="margin-top:9px"><button class="btn ghost small" data-act="estNutri">估一估营养</button></div>'+
+    '<div class="flabel">谁会做</div><div class="mchips" id="cookChips">'+
+    S.members.map(function(m){
+      return '<span class="mchip'+(cooks.indexOf(m.id)>=0?' on':'')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+'</span>';
+    }).join('')+'</div>'+
+    '<div class="hint">按材料份量本地估算（常见食材库），正式版将接入真实 AI 估算。</div>'+
+    '<div class="sh-actions"><button class="btn" data-act="saveDish" data-id="'+(d?d.id:'')+'">保存</button></div>'+
+    (d?'<div class="sh-actions" style="margin-top:9px"><button class="btn danger" data-act="delDish" data-id="'+d.id+'" data-armed="0">删除这道菜</button></div>':'')
+  );
+}
+
+function resSheet(dishId){
+  var d=dish(dishId);
+  openSheet(shHead('预定 · '+esc(d.name))+
+    '<div class="flabel">哪天</div><div class="seg2" id="resDate">'+
+    [0,1,2].map(function(n){return '<button data-d="'+n+'" class="'+(n===0?'on':'')+'">'+dateLabel(isoAdd(n))+'</button>'}).join('')+
+    '</div>'+
+    '<div class="flabel">时间</div><input class="finput" id="resTime" type="time" value="18:30" style="max-width:140px">'+
+    '<div class="flabel">谁做</div><div class="mchips" id="resCook">'+
+    '<span class="mchip on" data-mid=""><span class="waiting" style="color:var(--dot-on);font-weight:500">待接单</span></span>'+
+    S.members.map(function(m){
+      var can=d.cooks.indexOf(m.id)>=0;
+      return '<span class="mchip'+(can?'':' off')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+(can?' · 会做':'')+'</span>';
+    }).join('')+'</div>'+
+    '<div class="hint">保存时会自动查冰箱：缺的原料直接进购物清单。</div>'+
+    '<div class="sh-actions"><button class="btn" data-act="saveRes" data-id="'+d.id+'">预定</button></div>'
+  );
+}
+
+function invSheet(id){
+  var it=null;
+  if(id)S.inv.forEach(function(x){if(x.id===id)it=x});
+  var cat=it?it.cat:'food';
+  openSheet(shHead(it?'编辑库存项':'添加库存项')+
+    '<div class="flabel">名称</div><input class="finput" id="iName" value="'+esc(it?it.name:'')+'" placeholder="比如：鸡蛋">'+
+    '<div class="flabel">放在哪</div><div class="seg2" id="iCat">'+
+    CATS.map(function(c){return '<button data-c="'+c[0]+'" class="'+(c[0]===cat?'on':'')+'">'+c[1].split(' · ')[1]+'</button>'}).join('')+'</div>'+
+    '<div class="flabel">现有多少 · 单位</div><div class="frow">'+
+    '<input class="finput" id="iQty" type="number" inputmode="decimal" value="'+(it?it.qty:'')+'" placeholder="0">'+
+    '<input class="finput" id="iUnit" value="'+esc(it?it.unit:'个')+'"></div>'+
+    '<div class="flabel">低于多少提醒（同一单位）</div><input class="finput" id="iLow" type="number" inputmode="decimal" value="'+(it?it.low:'')+'" placeholder="比如 2">'+
+    '<div class="sh-actions"><button class="btn" data-act="saveInv" data-id="'+(it?it.id:'')+'">保存</button></div>'+
+    (it?'<div class="sh-actions" style="margin-top:9px"><button class="btn danger" data-act="delInv" data-id="'+it.id+'" data-armed="0">删除这项</button></div>':'')
+  );
+}
+
+function shopSheet(){
+  openSheet(shHead('添加到购物清单')+
+    '<div class="flabel">要买什么</div><input class="finput" id="sName" placeholder="比如：小葱">'+
+    '<div class="sh-actions"><button class="btn" data-act="saveShop">加入清单</button></div>'
+  );
+}
+
+function memberSheet(){
+  openSheet(shHead('当前是谁在用')+
+    '<div class="mchips" id="meSel" style="flex-direction:column;align-items:stretch">'+
+    S.members.map(function(m){
+      return '<span class="mchip'+(m.id===S.me?' on':'')+'" data-mid="'+m.id+'" style="justify-content:flex-start">'+avHtml(m,26)+
+      '<input class="finput" style="flex:1;max-width:170px;padding:6px 10px" data-rename="'+m.id+'" value="'+esc(m.name)+'"></span>';
+    }).join('')+'</div>'+
+    '<div class="hint">v0.1 在同一台设备上切换成员；接入云端后，两个人各自手机实时协作（做Supabase时上线）。</div>'
+  );
+}
+
+/* ---------- 事件 ---------- */
+function readIngs(){
+  var rows=[];
+  document.querySelectorAll('#ingRows .ingrow').forEach(function(r){
+    var name=r.querySelector('.n').value.trim(),
+        qty=parseFloat(r.querySelector('.q').value),
+        unit=r.querySelector('.u').value.trim()||'克';
+    if(name&&qty>0)rows.push({name:name,qty:qty,unit:unit});
+  });
+  return rows;
+}
+
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act],[data-nav]');
+  if(!el)return;
+  /* 房间导航 */
+  if(e.target.closest('[data-stop]')&&!e.target.closest('[data-act^="step"]'))return;
+  if(el.dataset.nav){
+    if(el.dataset.nav==='soon'){
+      var msgs={bed:'卧室还没整理好 —— 体重记录二期上线',study:'书房还没整理好 —— 账本在排队',cat:'猫角还没整理好 —— 三只猫二期搬进来'};
+      toast(msgs[el.dataset.room]||'还没有整理好');
+      return;
+    }
+    S.ui.view=el.dataset.nav;render();return;
+  }
+  var act=el.dataset.act;
+  if(!act)return;
+
+  switch(act){
+    case 'navBack':S.ui.view='home';render();break;
+    case 'closeSheet':closeSheet();break;
+
+    /* 厨房 */
+    case 'newDish':dishSheet(null);break;
+    case 'editDish':
+      if(e.target.closest('button'))break;
+      dishSheet(el.dataset.id);break;
+    case 'res':resSheet(el.dataset.id);break;
+    case 'take':
+      S.res.forEach(function(r){if(r.id===el.dataset.id)r.cook=S.me});
+      toast('接单了 · '+(member(S.me)||{}).name+'来做');render();break;
+    case 'cooked':
+      S.res=S.res.filter(function(r){if(r.id===el.dataset.id){
+        var d=dish(r.dishId);if(d)d.times++;
+        return false;
+      }return true});
+      toast('做好了 · 又多了一次拿手菜');render();break;
+    case 'cancelRes':
+      S.res=S.res.filter(function(r){return r.id!==el.dataset.id});
+      toast('已取消');render();break;
+
+    case 'addIng':
+      var box=document.getElementById('ingRows');
+      box.insertAdjacentHTML('beforeend',ingRowHtml({name:'',qty:'',unit:'克'}));
+      box.lastElementChild.querySelector('.n').focus();break;
+    case 'rmIng':el.closest('.ingrow').remove();break;
+    case 'estNutri':
+      var est=estimate(readIngs(),parseInt(document.getElementById('dServ').value,10)||2);
+      document.getElementById('nK').value=est.k;
+      document.getElementById('nP').value=est.p;
+      document.getElementById('nC').value=est.c;
+      document.getElementById('nF').value=est.f;
+      toast(est.unknown?('估好了 · '+est.unknown+' 样不在库里，按均值估'):'估好了 · 可手动微调');break;
+    case 'saveDish':
+      var name=document.getElementById('dName').value.trim();
+      var ings=readIngs();
+      if(!name){toast('先起个菜名');return}
+      if(!ings.length){toast('至少写一样材料');return}
+      var cooks=[];
+      document.querySelectorAll('#cookChips .mchip').forEach(function(ch){
+        if(ch.classList.contains('on'))cooks.push(parseInt(ch.dataset.mid,10));
+      });
+      var n={k:parseInt(document.getElementById('nK').value,10)||0,
+             p:parseInt(document.getElementById('nP').value,10)||0,
+             c:parseInt(document.getElementById('nC').value,10)||0,
+             f:parseInt(document.getElementById('nF').value,10)||0};
+      if(el.dataset.id){
+        var d0=dish(el.dataset.id);
+        d0.name=name;d0.ingredients=ings;d0.cooks=cooks;d0.nutri=n;
+        d0.servings=parseInt(document.getElementById('dServ').value,10)||2;
+        d0.est=true;
+        toast('已更新 · '+name);
+      }else{
+        S.dishes.push({id:uid(),name:name,servings:parseInt(document.getElementById('dServ').value,10)||2,
+          by:S.me,cooks:cooks,times:0,est:true,ingredients:ings,nutri:n});
+        toast('上架了 · '+name+'（默认 '+(member(S.me)||{}).name+' 会做）');
+      }
+      closeSheet();S.ui.ktab='menu';render();break;
+    case 'delDish':
+      if(el.dataset.armed==='0'){el.dataset.armed='1';el.textContent='再点一次确认删除';return}
+      S.dishes=S.dishes.filter(function(d){return d.id!==el.dataset.id});
+      S.res=S.res.filter(function(r){return r.dishId!==el.dataset.id});
+      closeSheet();toast('已删除');render();break;
+
+    /* 预定 */
+    case 'saveRes':
+      var dateBtn=document.querySelector('#resDate .on');
+      var date=isoAdd(parseInt(dateBtn.dataset.d,10)||0);
+      var time=document.getElementById('resTime').value||'18:30';
+      var cookBtn=document.querySelector('#resCook .on');
+      var cook=cookBtn?cookBtn.dataset.mid:null;
+      cook=cook?parseInt(cook,10):null;
+      var d1=dish(el.dataset.id);
+      var missing=checkInv(d1);
+      S.res.push({id:uid(),dishId:d1.id,date:date,time:time,cook:cook});
+      S.ui.view='kitchen';S.ui.ktab='res';
+      closeSheet();
+      toast(missing.length?('已预定 · 缺 '+missing.length+' 样原料，已进购物清单'):'已预定 · 冰箱里原料都齐');
+      render();break;
+
+    /* 库存 */
+    case 'newInv':invSheet(null);break;
+    case 'editInv':
+      if(e.target.closest('button'))break;
+      invSheet(el.dataset.id);break;
+    case 'step':
+      var d=parseInt(el.dataset.d,10);
+      S.inv.forEach(function(it){
+        if(it.id===el.dataset.id)it.qty=Math.max(0,Math.round((it.qty+d)*10)/10);
+      });
+      e.stopPropagation();render();break;
+    case 'saveInv':
+      var nm=document.getElementById('iName').value.trim();
+      if(!nm){toast('写个名字');return}
+      var catBtn=document.querySelector('#iCat .on');
+      var cat=catBtn?catBtn.dataset.c:'food';
+      var q=parseFloat(document.getElementById('iQty').value)||0;
+      var u=document.getElementById('iUnit').value.trim()||'个';
+      var lw=parseFloat(document.getElementById('iLow').value)||0;
+      if(el.dataset.id){
+        S.inv.forEach(function(it){if(it.id===el.dataset.id){it.name=nm;it.cat=cat;it.qty=q;it.unit=u;it.low=lw}});
+      }else{
+        S.inv.push({id:uid(),name:nm,cat:cat,qty:q,unit:u,low:lw});
+      }
+      closeSheet();render();break;
+    case 'delInv':
+      if(el.dataset.armed==='0'){el.dataset.armed='1';el.textContent='再点一次确认删除';return}
+      S.inv=S.inv.filter(function(it){return it.id!==el.dataset.id});
+      closeSheet();toast('已删除');render();break;
+
+    /* 清单 */
+    case 'newShop':shopSheet();break;
+    case 'saveShop':
+      var sn=document.getElementById('sName').value.trim();
+      if(!sn){toast('写点什么要买');return}
+      S.shop.push({id:uid(),name:sn,note:'',done:false});
+      closeSheet();render();break;
+    case 'shopToggle':
+      S.shop.forEach(function(s){if(s.id===el.dataset.id)s.done=!s.done});
+      render();break;
+    case 'shopDel':
+      S.shop=S.shop.filter(function(s){return s.id!==el.dataset.id});
+      render();break;
+    case 'clearShop':
+      S.shop=S.shop.filter(function(s){return !s.done});
+      render();break;
+  }
+});
+
+/* 弹层内单选 chips（mchip / seg2） */
+document.addEventListener('click',function(e){
+  var ch=e.target.closest('.mchip,.seg2 button');
+  if(!ch)return;
+  if(e.target.tagName==='INPUT')return;
+  var group=ch.parentElement;
+  if(group.id==='cookChips'){
+    ch.classList.toggle('on');return; /* 多选 */
+  }
+  group.querySelectorAll('.mchip,.seg2 button,button').forEach(function(x){x.classList.remove('on')});
+  ch.classList.add('on');
+  if(group.id==='meSel'){
+    S.me=parseInt(ch.dataset.mid,10);
+    group.querySelectorAll('input[data-rename]').forEach(function(inp){
+      var m=member(parseInt(inp.dataset.rename,10));
+      if(m&&inp.value.trim())m.name=inp.value.trim();
+    });
+    renderMeChip();renderHome();
+    toast('切到 '+(member(S.me)||{}).name);
+  }
+});
+document.addEventListener('input',function(e){
+  var inp=e.target.closest('input[data-rename]');
+  if(inp){
+    var m=member(parseInt(inp.dataset.rename,10));
+    if(m){m.name=inp.value.trim()||m.name;renderMeChip();renderHome();save()}
+  }
+});
+
+/* 头部 */
+document.getElementById('backBtn').addEventListener('click',function(){S.ui.view='home';render()});
+document.getElementById('todayCard').addEventListener('click',function(){
+  S.ui.view='kitchen';S.ui.ktab='res';render();
+});
+document.getElementById('meChip').addEventListener('click',memberSheet);
+document.querySelectorAll('.ktab button').forEach(function(b){
+  b.addEventListener('click',function(){S.ui.ktab=b.dataset.tab;render()});
+});
+
+/* 主题 */
+var sun=document.getElementById('icoSun'),moon=document.getElementById('icoMoon');
+function applyTheme(t){
+  if(t==='dark')document.documentElement.dataset.theme='dark';
+  else if(t==='light')document.documentElement.dataset.theme='light';
+  else delete document.documentElement.dataset.theme;
+  var dark=t==='dark'||(t==null&&matchMedia('(prefers-color-scheme: dark)').matches);
+  sun.hidden=dark;moon.hidden=!dark;
+  try{localStorage.setItem('jia-theme',t||'system')}catch(_){}
+}
+document.getElementById('themeBtn').addEventListener('click',function(){
+  var cur=document.documentElement.dataset.theme;
+  var sysDark=matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme((cur==='dark'||(cur==null&&sysDark))?'light':'dark');
+});
+var savedTheme=null;
+try{savedTheme=localStorage.getItem('jia-theme')}catch(_){}
+applyTheme(savedTheme||'system');
+
+render();
+})();
+</script>
