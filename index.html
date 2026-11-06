@@ -159,6 +159,20 @@ svg text{user-select:none}
 .lrow .x{width:26px;height:26px;border:none;background:none;color:var(--ink2);font-size:14px;cursor:pointer;flex:none}
 .clrbar{display:flex;justify-content:flex-end;margin-top:4px}
 
+/* 进门（引导） */
+#v-join{padding-top:9vh}
+.join-title{font-size:32px;text-align:center;margin:4px 0 10px}
+.join-sub{font-size:12.5px;color:var(--ink2);text-align:center;line-height:1.9;margin-bottom:28px}
+.join-card{display:flex;flex-direction:column;gap:10px}
+.join-or{font-size:11.5px;color:var(--ink2);text-align:center;margin:10px 0 2px}
+.join-code{display:flex;gap:8px}
+.join-code .finput{flex:1;letter-spacing:4px;font-weight:700;text-transform:uppercase;text-align:center}
+.code-big{
+  font-size:26px;font-weight:700;letter-spacing:6px;text-align:center;
+  border:1.5px dashed var(--warm);border-radius:14px;padding:16px 8px;
+  color:var(--warm);font-variant-numeric:tabular-nums;margin:6px 0 2px;user-select:all;
+}
+
 /* 底部弹层 */
 #mask{position:fixed;inset:0;background:rgba(30,25,18,.45);opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
 #mask.on{opacity:1;pointer-events:auto}
@@ -223,6 +237,19 @@ svg text{user-select:none}
       <svg id="icoMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/></svg>
     </button>
   </header>
+
+  <!-- ============ 进门 · 首次使用 ============ -->
+  <section class="view" id="v-join">
+    <div class="join-title display">欢迎回家</div>
+    <div class="join-sub">两个人的家（和三只猫）的小应用<br>餐厅 · 冰箱 · 购物清单都在一栋小房子里</div>
+    <div class="card join-card">
+      <button class="btn" data-act="createSheet" style="padding:12px 0;font-size:14px">创建我们的家</button>
+      <div class="join-or">家人已经建好了？</div>
+      <div class="join-code"><input class="finput" id="joinCode" placeholder="邀请码" maxlength="12" autocapitalize="characters"></div>
+      <button class="btn ghost" data-act="joinGo" style="padding:12px 0;font-size:14px">加入这个家</button>
+    </div>
+    <div class="hint" style="text-align:center;margin-top:14px">数据保存在你们自己的云端（Supabase）<br>两台手机用同一个邀请码，就是同一个家</div>
+  </section>
 
   <!-- ============ 首页 · 家 ============ -->
   <section class="view on" id="v-home">
@@ -345,7 +372,7 @@ svg text{user-select:none}
         <rect class="hot" data-nav="list" x="268" y="292" width="62" height="120" rx="10" tabindex="0" aria-label="玄关"/>
       </svg>
     </div>
-    <div class="demo-note">点房间进入 · 圆点 = 有事发生 · v0.1 数据存在本机</div>
+    <div class="demo-note">点房间进入 · 圆点 = 有事发生 · 两人云端同步</div>
   </section>
 
   <!-- ============ 厨房 ============ -->
@@ -389,55 +416,27 @@ svg text{user-select:none}
 (function(){
 'use strict';
 
+/* ---------- 云端配置（publishable key，公开是安全的，行级安全策略在服务端把关） ---------- */
+var SUPA_URL='https://irnjdlqqojjjunqyrvlw.supabase.co';
+var SUPA_KEY='sb_publishable_sEnTySyQHRHFJ71tWCoekg_Vvoy8ctM';
+
 /* ---------- 状态 ---------- */
-var LS_KEY='jia-v0.1';
-var S=null;
+var AUTH=null;   /* {fid, code, me} 家庭口令，存本机 */
+var D={members:[],dishes:[],inv:[],res:[],shop:[],familyName:''};
+var UI={view:'join',ktab:'menu'};
+var busy=false;  /* 同步中 */
 
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-function member(id){for(var i=0;i<S.members.length;i++)if(S.members[i].id===id)return S.members[i];return null}
-function dish(id){for(var i=0;i<S.dishes.length;i++)if(S.dishes[i].id===id)return S.dishes[i];return null}
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(_){}}
+function member(id){for(var i=0;i<D.members.length;i++)if(D.members[i].id===id)return D.members[i];return null}
+function dish(id){for(var i=0;i<D.dishes.length;i++)if(D.dishes[i].id===id)return D.dishes[i];return null}
+function resById(id){for(var i=0;i<D.res.length;i++)if(D.res[i].id===id)return D.res[i];return null}
+function invById(id){for(var i=0;i<D.inv.length;i++)if(D.inv[i].id===id)return D.inv[i];return null}
+function shopById(id){for(var i=0;i<D.shop.length;i++)if(D.shop[i].id===id)return D.shop[i];return null}
+function persistAuth(){try{localStorage.setItem('jia-auth-v2',JSON.stringify(AUTH))}catch(_){}}
+function persistCache(){try{localStorage.setItem('jia-cache-v2',JSON.stringify(D))}catch(_){}}
 
-function seed(){
-  var d1=uid(),d2=uid(),d3=uid();
-  return {
-    members:[
-      {id:1,name:'成员一',color:'#D0832F'},
-      {id:2,name:'成员二',color:'#3E7A66'}
-    ],
-    me:1,
-    dishes:[
-      {id:d1,name:'番茄牛腩',servings:2,by:1,cooks:[1,2],times:3,est:true,
-        ingredients:[{name:'牛腩',qty:600,unit:'克'},{name:'番茄',qty:300,unit:'克'},{name:'洋葱',qty:100,unit:'克'},{name:'姜',qty:15,unit:'克'}],
-        nutri:{k:520,p:38,c:24,f:28}},
-      {id:d2,name:'番茄炒蛋',servings:2,by:2,cooks:[1],times:1,est:true,
-        ingredients:[{name:'鸡蛋',qty:3,unit:'个'},{name:'番茄',qty:200,unit:'克'},{name:'小葱',qty:10,unit:'克'}],
-        nutri:{k:285,p:15,c:12,f:18}},
-      {id:d3,name:'葱油拌面',servings:2,by:2,cooks:[2],times:5,est:true,
-        ingredients:[{name:'面条',qty:200,unit:'克'},{name:'小葱',qty:20,unit:'克'},{name:'生抽',qty:15,unit:'毫升'},{name:'食用油',qty:15,unit:'毫升'}],
-        nutri:{k:430,p:11,c:62,f:14}}
-    ],
-    inv:[
-      {id:uid(),name:'牛腩',cat:'food',qty:0,unit:'克',low:300},
-      {id:uid(),name:'鸡蛋',cat:'food',qty:3,unit:'个',low:4},
-      {id:uid(),name:'番茄',cat:'food',qty:250,unit:'克',low:200},
-      {id:uid(),name:'洋葱',cat:'food',qty:150,unit:'克',low:100},
-      {id:uid(),name:'小葱',cat:'food',qty:0,unit:'克',low:20},
-      {id:uid(),name:'洗衣液',cat:'daily',qty:1,unit:'瓶',low:2},
-      {id:uid(),name:'卫生纸',cat:'daily',qty:4,unit:'卷',low:2},
-      {id:uid(),name:'猫粮',cat:'cat',qty:800,unit:'克',low:1000},
-      {id:uid(),name:'猫砂',cat:'cat',qty:6,unit:'千克',low:2}
-    ],
-    res:[
-      {id:uid(),dishId:d1,date:isoAdd(0),time:'18:30',cook:null}
-    ],
-    shop:[
-      {id:uid(),name:'牛腩',note:'来自 番茄牛腩',done:false}
-    ],
-    ui:{view:'home',ktab:'menu'}
-  };
-}
+try{AUTH=JSON.parse(localStorage.getItem('jia-auth-v2'))||null}catch(_){AUTH=null}
+try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members)D=_c}catch(_){}
 
 function isoAdd(days){
   var d=new Date();d.setDate(d.getDate()+days);
@@ -450,15 +449,82 @@ function dateLabel(iso){
   var d=new Date(iso+'T12:00:00');
   return (d.getMonth()+1)+'月'+d.getDate()+'日';
 }
-
-function load(){
-  try{
-    var raw=localStorage.getItem(LS_KEY);
-    if(raw){S=JSON.parse(raw);if(S&&S.dishes)return}
-  }catch(_){}
-  S=seed();save();
+function genCode(){
+  var cs='ABCDEFGHJKMNPQRSTUVWXYZ23456789',s='';
+  for(var i=0;i<10;i++)s+=cs[Math.floor(Math.random()*cs.length)];
+  return s;
 }
-load();
+
+/* ---------- Supabase REST ---------- */
+function api(method,path,body,prefer){
+  var h={
+    'apikey':SUPA_KEY,
+    'Authorization':'Bearer '+SUPA_KEY,
+    'x-family-id':(AUTH&&AUTH.fid)||'',
+    'x-family-code':(AUTH&&AUTH.code)||''
+  };
+  if(body!==undefined)h['Content-Type']='application/json';
+  if(prefer)h['Prefer']=prefer;
+  return fetch(SUPA_URL+'/rest/v1/'+path,{
+    method:method,headers:h,
+    body:body===undefined?undefined:JSON.stringify(body)
+  }).then(function(r){
+    if(!r.ok)return r.text().catch(function(){return ''}).then(function(t){
+      throw new Error(method+' '+path+' '+r.status+(t?' '+t.slice(0,120):''));
+    });
+    return r.text().then(function(t){return t?JSON.parse(t):null});
+  });
+}
+
+/* 同步：拉全量（6 张表并行），存缓存并重渲染 */
+function sync(initial){
+  if(!AUTH||busy)return Promise.resolve();
+  busy=true;
+  return Promise.all([
+    api('GET','families?select=id,name'),
+    api('GET','members?select=*&order=sort.asc'),
+    api('GET','dishes?select=*&order=created_at.asc'),
+    api('GET','inventory?select=*&order=id.asc'),
+    api('GET','reservations?select=*&order=date.asc,time.asc'),
+    api('GET','shopping?select=*&order=id.asc')
+  ]).then(function(rs){
+    if(!rs[0].length){ /* 邀请码失效/家被删 */
+      logout();toast('邀请码失效了，重新进门吧');busy=false;return;
+    }
+    D.familyName=rs[0][0].name;
+    D.members=rs[1];
+    D.dishes=rs[2].map(function(d){return {
+      id:d.id,name:d.name,servings:d.servings,ingredients:d.ingredients||[],
+      nutri:d.nutri,est:!!d.est,cooks:d.cooks||[],times:d.times_cooked||0,created_by:d.created_by
+    }});
+    D.inv=rs[3].map(function(i){return {id:i.id,name:i.name,cat:i.cat,qty:Number(i.qty),unit:i.unit,low:Number(i.low)}});
+    D.res=rs[4].map(function(r){return {id:r.id,dishId:r.dish_id,date:r.date,time:r.time,cook:r.cook_id}});
+    D.shop=rs[5];
+    persistCache();
+    if(UI.view!=='join')render();
+  }).catch(function(e){
+    if(initial)toast('连不上云端，稍后自动重试');
+    else toast('同步失败，稍后再试');
+  }).then(function(){busy=false});
+}
+
+/* 所有写操作走这里：执行 → 拉最新 → 渲染；失败提示（after 为字符串则 toast，为函数则执行） */
+function run(p,after){
+  return p.then(function(){
+    return sync().then(function(){
+      if(typeof after==='string')toast(after);
+      if(typeof after==='function')after();
+    });
+  }).catch(function(e){
+    toast('没同步成功，再试一次');
+  });
+}
+
+function logout(){
+  AUTH=null;
+  try{localStorage.removeItem('jia-auth-v2')}catch(_){}
+  UI.view='join';render();
+}
 
 /* ---------- toast ---------- */
 var toastEl=document.getElementById('toast'),tid;
@@ -492,53 +558,58 @@ function estimate(ings,servings){
   return {k:Math.round(k/sv),p:Math.round(p/sv),c:Math.round(c/sv),f:Math.round(f/sv),unknown:unknown};
 }
 
-/* ---------- 库存比对 ---------- */
+/* ---------- 库存比对（缺料 → 云端购物清单） ---------- */
 function gramsOf(qty,unit){return (parseFloat(qty)||0)*(UNIT_G[unit]||1)}
 function checkInv(d){
-  var missing=[];
+  var missing=[],adds=[];
   (d.ingredients||[]).forEach(function(ing){
     var needG=gramsOf(ing.qty,ing.unit),name=String(ing.name||'').trim();
+    if(!name)return;
     var item=null;
-    S.inv.forEach(function(it){if(it.cat==='food'&&it.name===name)item=it});
+    D.inv.forEach(function(it){if(it.cat==='food'&&it.name===name)item=it});
     var haveG=item?gramsOf(item.qty,item.unit):0;
     if(haveG<needG){
       var dupe=false;
-      S.shop.forEach(function(s){if(!s.done&&s.name===name)dupe=true});
-      if(!dupe)S.shop.push({id:uid(),name:name,note:'来自 '+d.name,done:false});
+      D.shop.forEach(function(s){if(!s.done&&s.name===name)dupe=true});
+      if(!dupe)adds.push({family_id:AUTH.fid,name:name,note:'来自 '+d.name,done:false,created_by:AUTH.me});
       missing.push(name);
     }
   });
-  return missing;
+  var p=adds.length?api('POST','shopping',adds,'return=minimal'):Promise.resolve();
+  return p.then(function(){return missing});
 }
 function lowCount(cat){
-  var n=0;S.inv.forEach(function(it){if(it.cat===cat&&it.qty<it.low)n++});return n;
+  var n=0;D.inv.forEach(function(it){if(it.cat===cat&&it.qty<it.low)n++});return n;
 }
 function openRes(){
-  return S.res.slice().sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time)});
+  return D.res.slice().sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time)});
 }
 
 /* ---------- 渲染 ---------- */
-var TITLES={home:'家',kitchen:'厨房 · 家庭餐厅',fridge:'冰箱与库存',list:'购物清单'};
+var TITLES={join:'家',home:'家',kitchen:'厨房 · 家庭餐厅',fridge:'冰箱与库存',list:'购物清单'};
 function render(){
-  ['home','kitchen','fridge','list'].forEach(function(v){
-    document.getElementById('v-'+v).classList.toggle('on',S.ui.view===v);
+  ['join','home','kitchen','fridge','list'].forEach(function(v){
+    document.getElementById('v-'+v).classList.toggle('on',UI.view===v);
   });
-  document.getElementById('vTitle').textContent=TITLES[S.ui.view];
-  document.getElementById('backBtn').hidden=(S.ui.view==='home');
+  document.getElementById('vTitle').textContent=TITLES[UI.view]||'家';
+  document.getElementById('backBtn').hidden=(UI.view==='home'||UI.view==='join');
   renderMeChip();
-  if(S.ui.view==='home')renderHome();
-  if(S.ui.view==='kitchen')renderKitchen();
-  if(S.ui.view==='fridge')renderFridge();
-  if(S.ui.view==='list')renderList();
-  save();
+  if(UI.view==='home')renderHome();
+  if(UI.view==='kitchen')renderKitchen();
+  if(UI.view==='fridge')renderFridge();
+  if(UI.view==='list')renderList();
 }
 
 function avHtml(m,size){
+  if(!m)return '';
   return '<span class="av" style="background:'+m.color+';width:'+size+'px;height:'+size+'px;font-size:'+Math.round(size*0.48)+'px">'+esc(m.name.slice(0,1))+'</span>';
 }
 function renderMeChip(){
-  var m=member(S.me)||S.members[0];
-  document.getElementById('meChip').innerHTML=avHtml(m,22)+'<span>'+esc(m.name)+'</span>';
+  var el=document.getElementById('meChip');
+  if(!AUTH||!D.members.length){el.innerHTML='';el.style.display='none';return}
+  el.style.display='';
+  var m=member(AUTH.me)||D.members[0];
+  el.innerHTML=avHtml(m,22)+'<span>'+esc(m.name)+'</span>';
 }
 
 function renderHome(){
@@ -547,7 +618,7 @@ function renderHome(){
   var wd=['日','一','二','三','四','五','六'][new Date().getDay()];
   var d=new Date();
   document.getElementById('greetDate').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 周'+wd+' · '+greet;
-  document.getElementById('greetTitle').textContent=S.members.map(function(m){return m.name}).join(' 和 ')+'的家';
+  document.getElementById('greetTitle').textContent=D.members.map(function(m){return m.name}).join(' 和 ')+'的家';
 
   var res=openRes()[0];
   var tc=document.getElementById('todayCard');
@@ -561,7 +632,7 @@ function renderHome(){
   }else{
     tc.innerHTML='<div class="eyebrow">今晚吃什么</div><div class="row1"><div class="dish display" style="font-size:17px;color:var(--ink2)">还没定 · 去菜单里挑一道？</div></div>';
   }
-  var shopN=S.shop.filter(function(s){return !s.done}).length;
+  var shopN=D.shop.filter(function(s){return !s.done}).length;
   var lowFood=lowCount('food');
   var lowCat=lowCount('cat');
   var alerts=[];
@@ -582,21 +653,21 @@ function renderHome(){
 
 function renderKitchen(){
   document.querySelectorAll('.ktab button').forEach(function(b){
-    b.classList.toggle('on',b.dataset.tab===S.ui.ktab);
+    b.classList.toggle('on',b.dataset.tab===UI.ktab);
   });
   var body=document.getElementById('kitchenBody');
-  if(S.ui.ktab==='menu'){
-    if(!S.dishes.length){
+  if(UI.ktab==='menu'){
+    if(!D.dishes.length){
       body.innerHTML='<div class="empty">菜单还是空的<br>学会一道菜，就上架一道</div>';
       return;
     }
-    body.innerHTML=S.dishes.map(function(d){
+    body.innerHTML=D.dishes.map(function(d){
       var n=d.nutri||{};
-      var cooks=d.cooks.map(function(id){var m=member(id);return m?avHtml(m,21):''}).join('');
+      var cooks=(d.cooks||[]).map(function(id){var m=member(id);return m?avHtml(m,21):''}).join('');
       return '<div class="card" data-act="editDish" data-id="'+d.id+'">'+
         '<div class="dish-top"><div class="dish-name display">'+esc(d.name)+'</div><div class="times">做过 '+d.times+' 次</div></div>'+
         '<div class="nutri">'+
-          '<span>≈ '+n.k+' kcal</span><span>蛋白 '+n.p+'g</span><span>碳水 '+n.c+'g</span><span>脂肪 '+n.f+'g</span>'+
+          '<span>≈ '+(n.k||0)+' kcal</span><span>蛋白 '+(n.p||0)+'g</span><span>碳水 '+(n.c||0)+'g</span><span>脂肪 '+(n.f||0)+'g</span>'+
           (d.est?'<span class="est">估算</span>':'')+
         '</div>'+
         '<div class="dish-bot"><div class="cooks">会做 '+cooks+'</div>'+
@@ -629,7 +700,7 @@ var CATS=[['food','冰箱 · 食材'],['daily','家里 · 日用品'],['cat','�
 function renderFridge(){
   var html='';
   CATS.forEach(function(c){
-    var items=S.inv.filter(function(it){return it.cat===c[0]});
+    var items=D.inv.filter(function(it){return it.cat===c[0]});
     html+='<div class="igroup"><div class="ig-title">'+c[1]+'</div>';
     if(!items.length)html+='<div class="empty" style="padding:14px">还没有记录</div>';
     items.forEach(function(it){
@@ -649,13 +720,13 @@ function renderFridge(){
 
 function renderList(){
   var html='';
-  var items=S.shop.slice().sort(function(a,b){return (a.done?1:0)-(b.done?1:0)});
+  var items=D.shop.slice().sort(function(a,b){return (a.done?1:0)-(b.done?1:0)});
   if(!items.length)html='<div class="empty">清单是空的<br>预定菜时缺的原料会自动出现在这里</div>';
   items.forEach(function(s){
     html+='<div class="lrow'+(s.done?' done':'')+'">'+
-      '<button class="ck" data-act="shopToggle" data-id="'+s.id+'" aria-label="勾选"></button>'+
-      '<div class="lname">'+esc(s.name)+(s.note?'<span class="note">'+esc(s.note)+'</span>':'')+'</div>'+
-      '<button class="x" data-act="shopDel" data-id="'+s.id+'" aria-label="删除">✕</button></div>';
+    '<button class="ck" data-act="shopToggle" data-id="'+s.id+'" aria-label="勾选"></button>'+
+    '<div class="lname">'+esc(s.name)+(s.note?'<span class="note">'+esc(s.note)+'</span>':'')+'</div>'+
+    '<button class="x" data-act="shopDel" data-id="'+s.id+'" aria-label="删除">✕</button></div>';
   });
   document.getElementById('listBody').innerHTML=html;
 }
@@ -681,10 +752,38 @@ function ingRowHtml(ing){
     '<button class="rm" data-act="rmIng">✕</button></div>';
 }
 
+function createSheet(){
+  openSheet(shHead('创建我们的家')+
+    '<div class="flabel">你的名字</div><input class="finput" id="cMe" placeholder="比如：小诺" autocapitalize="off">'+
+    '<div class="flabel">TA 的名字</div><input class="finput" id="cTa" placeholder="比如：小满" autocapitalize="off">'+
+    '<div class="hint">创建后会生成一个家庭邀请码，发给 TA —— 两台手机用同一个码，就是同一个家。数据存你们自己的云端。</div>'+
+    '<div class="sh-actions"><button class="btn" data-act="createGo">开门</button></div>'
+  );
+}
+
+function pickSheet(members){
+  openSheet(shHead('你是谁')+
+    '<div class="mchips" id="pickMe" style="flex-direction:column;align-items:stretch">'+
+    members.map(function(m){
+      return '<span class="mchip" data-mid="'+m.id+'" style="justify-content:flex-start">'+avHtml(m,26)+esc(m.name)+'</span>';
+    }).join('')+'</div>'+
+    '<div class="hint">选错了也没关系，之后点头像可以切换。</div>'
+  );
+}
+
+function codeSheet(code){
+  openSheet(shHead('家建好了 · 这是钥匙')+
+    '<div class="code-big">'+esc(code)+'</div>'+
+    '<div class="hint" style="text-align:center">把这个邀请码发给 TA<br>TA 打开网页选「加入这个家」→ 输码 → 就进来了</div>'+
+    '<div class="sh-actions"><button class="btn" data-act="copyCode">复制邀请码</button></div>'+
+    '<div class="sh-actions" style="margin-top:9px"><button class="btn ghost" data-act="closeSheet">先到处看看</button></div>'
+  );
+}
+
 function dishSheet(id){
   var d=id?dish(id):null;
   var ings=d?d.ingredients:[{name:'',qty:'',unit:'克'}];
-  var cooks=d?d.cooks.slice():[S.me];
+  var cooks=d?d.cooks.slice():[AUTH.me];
   openSheet(shHead(d?'编辑菜品':'上架新菜')+
     '<div class="flabel">菜名</div><input class="finput" id="dName" value="'+esc(d?d.name:'')+'" placeholder="比如：番茄牛腩">'+
     '<div class="flabel">材料（做什么用多少）</div><div id="ingRows">'+
@@ -700,7 +799,7 @@ function dishSheet(id){
     '</div>'+
     '<div style="margin-top:9px"><button class="btn ghost small" data-act="estNutri">估一估营养</button></div>'+
     '<div class="flabel">谁会做</div><div class="mchips" id="cookChips">'+
-    S.members.map(function(m){
+    D.members.map(function(m){
       return '<span class="mchip'+(cooks.indexOf(m.id)>=0?' on':'')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+'</span>';
     }).join('')+'</div>'+
     '<div class="hint">按材料份量本地估算（常见食材库），正式版将接入真实 AI 估算。</div>'+
@@ -718,18 +817,17 @@ function resSheet(dishId){
     '<div class="flabel">时间</div><input class="finput" id="resTime" type="time" value="18:30" style="max-width:140px">'+
     '<div class="flabel">谁做</div><div class="mchips" id="resCook">'+
     '<span class="mchip on" data-mid=""><span class="waiting" style="color:var(--dot-on);font-weight:500">待接单</span></span>'+
-    S.members.map(function(m){
-      var can=d.cooks.indexOf(m.id)>=0;
+    D.members.map(function(m){
+      var can=(d.cooks||[]).indexOf(m.id)>=0;
       return '<span class="mchip'+(can?'':' off')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+(can?' · 会做':'')+'</span>';
     }).join('')+'</div>'+
-    '<div class="hint">保存时会自动查冰箱：缺的原料直接进购物清单。</div>'+
+    '<div class="hint">保存时会自动查冰箱：缺的原料直接进购物清单（两人手机都能看到）。</div>'+
     '<div class="sh-actions"><button class="btn" data-act="saveRes" data-id="'+d.id+'">预定</button></div>'
   );
 }
 
 function invSheet(id){
-  var it=null;
-  if(id)S.inv.forEach(function(x){if(x.id===id)it=x});
+  var it=id?invById(id):null;
   var cat=it?it.cat:'food';
   openSheet(shHead(it?'编辑库存项':'添加库存项')+
     '<div class="flabel">名称</div><input class="finput" id="iName" value="'+esc(it?it.name:'')+'" placeholder="比如：鸡蛋">'+
@@ -754,11 +852,15 @@ function shopSheet(){
 function memberSheet(){
   openSheet(shHead('当前是谁在用')+
     '<div class="mchips" id="meSel" style="flex-direction:column;align-items:stretch">'+
-    S.members.map(function(m){
-      return '<span class="mchip'+(m.id===S.me?' on':'')+'" data-mid="'+m.id+'" style="justify-content:flex-start">'+avHtml(m,26)+
+    D.members.map(function(m){
+      return '<span class="mchip'+(m.id===AUTH.me?' on':'')+'" data-mid="'+m.id+'" style="justify-content:flex-start">'+avHtml(m,26)+
       '<input class="finput" style="flex:1;max-width:170px;padding:6px 10px" data-rename="'+m.id+'" value="'+esc(m.name)+'"></span>';
     }).join('')+'</div>'+
-    '<div class="hint">v0.1 在同一台设备上切换成员；接入云端后，两个人各自手机实时协作（做Supabase时上线）。</div>'
+    '<div class="flabel">家庭邀请码（发给家人就能加入）</div>'+
+    '<div class="join-code"><input class="finput" id="codeShow" readonly value="'+esc(AUTH.code)+'" style="text-align:center">'+
+    '<button class="btn small ghost" data-act="copyCode" style="flex:none">复制</button></div>'+
+    '<div class="hint">两人各自手机保存同一个邀请码即同一个家；数据在云端（你们自己的 Supabase），换手机输码即可回来。</div>'+
+    '<div class="sh-actions" style="margin-top:14px"><button class="btn danger" data-act="leave">退出这个家</button></div>'
   );
 }
 
@@ -785,14 +887,22 @@ document.addEventListener('click',function(e){
       toast(msgs[el.dataset.room]||'还没有整理好');
       return;
     }
-    S.ui.view=el.dataset.nav;render();return;
+    UI.view=el.dataset.nav;render();return;
   }
   var act=el.dataset.act;
   if(!act)return;
 
   switch(act){
-    case 'navBack':S.ui.view='home';render();break;
+    case 'navBack':UI.view='home';render();break;
     case 'closeSheet':closeSheet();break;
+
+    /* 进门 */
+    case 'createSheet':createSheet();break;
+    case 'createGo':createGo(el);break;
+    case 'joinGo':joinGo(el);break;
+    case 'copyCode':
+      copyText(AUTH?AUTH.code:'');
+      break;
 
     /* 厨房 */
     case 'newDish':dishSheet(null);break;
@@ -801,17 +911,19 @@ document.addEventListener('click',function(e){
       dishSheet(el.dataset.id);break;
     case 'res':resSheet(el.dataset.id);break;
     case 'take':
-      S.res.forEach(function(r){if(r.id===el.dataset.id)r.cook=S.me});
-      toast('接单了 · '+(member(S.me)||{}).name+'来做');render();break;
+      var me=member(AUTH.me);
+      run(api('PATCH','reservations?id=eq.'+el.dataset.id,{cook_id:AUTH.me},'return=minimal'),
+        '接单了 · '+(me?me.name:'')+'来做');
+      break;
     case 'cooked':
-      S.res=S.res.filter(function(r){if(r.id===el.dataset.id){
-        var d=dish(r.dishId);if(d)d.times++;
-        return false;
-      }return true});
-      toast('做好了 · 又多了一次拿手菜');render();break;
+      var r0=resById(el.dataset.id);
+      var p0=r0?api('DELETE','reservations?id=eq.'+el.dataset.id):Promise.resolve();
+      if(r0){var d0=dish(r0.dishId);if(d0)p0=p0.then(function(){return api('PATCH','dishes?id=eq.'+d0.id,{times_cooked:d0.times+1},'return=minimal')})}
+      run(p0,'做好了 · 又多了一次拿手菜');
+      break;
     case 'cancelRes':
-      S.res=S.res.filter(function(r){return r.id!==el.dataset.id});
-      toast('已取消');render();break;
+      run(api('DELETE','reservations?id=eq.'+el.dataset.id),'已取消');
+      break;
 
     case 'addIng':
       var box=document.getElementById('ingRows');
@@ -825,52 +937,18 @@ document.addEventListener('click',function(e){
       document.getElementById('nC').value=est.c;
       document.getElementById('nF').value=est.f;
       toast(est.unknown?('估好了 · '+est.unknown+' 样不在库里，按均值估'):'估好了 · 可手动微调');break;
-    case 'saveDish':
-      var name=document.getElementById('dName').value.trim();
-      var ings=readIngs();
-      if(!name){toast('先起个菜名');return}
-      if(!ings.length){toast('至少写一样材料');return}
-      var cooks=[];
-      document.querySelectorAll('#cookChips .mchip').forEach(function(ch){
-        if(ch.classList.contains('on'))cooks.push(parseInt(ch.dataset.mid,10));
-      });
-      var n={k:parseInt(document.getElementById('nK').value,10)||0,
-             p:parseInt(document.getElementById('nP').value,10)||0,
-             c:parseInt(document.getElementById('nC').value,10)||0,
-             f:parseInt(document.getElementById('nF').value,10)||0};
-      if(el.dataset.id){
-        var d0=dish(el.dataset.id);
-        d0.name=name;d0.ingredients=ings;d0.cooks=cooks;d0.nutri=n;
-        d0.servings=parseInt(document.getElementById('dServ').value,10)||2;
-        d0.est=true;
-        toast('已更新 · '+name);
-      }else{
-        S.dishes.push({id:uid(),name:name,servings:parseInt(document.getElementById('dServ').value,10)||2,
-          by:S.me,cooks:cooks,times:0,est:true,ingredients:ings,nutri:n});
-        toast('上架了 · '+name+'（默认 '+(member(S.me)||{}).name+' 会做）');
-      }
-      closeSheet();S.ui.ktab='menu';render();break;
+    case 'saveDish':saveDish(el);break;
     case 'delDish':
       if(el.dataset.armed==='0'){el.dataset.armed='1';el.textContent='再点一次确认删除';return}
-      S.dishes=S.dishes.filter(function(d){return d.id!==el.dataset.id});
-      S.res=S.res.filter(function(r){return r.dishId!==el.dataset.id});
-      closeSheet();toast('已删除');render();break;
+      run(api('DELETE','dishes?id=eq.'+el.dataset.id).then(function(){
+        /* 预定会随外键级联删除 */
+      }),function(){closeSheet();toast('已删除')});
+      break;
 
     /* 预定 */
     case 'saveRes':
-      var dateBtn=document.querySelector('#resDate .on');
-      var date=isoAdd(parseInt(dateBtn.dataset.d,10)||0);
-      var time=document.getElementById('resTime').value||'18:30';
-      var cookBtn=document.querySelector('#resCook .on');
-      var cook=cookBtn?cookBtn.dataset.mid:null;
-      cook=cook?parseInt(cook,10):null;
-      var d1=dish(el.dataset.id);
-      var missing=checkInv(d1);
-      S.res.push({id:uid(),dishId:d1.id,date:date,time:time,cook:cook});
-      S.ui.view='kitchen';S.ui.ktab='res';
-      closeSheet();
-      toast(missing.length?('已预定 · 缺 '+missing.length+' 样原料，已进购物清单'):'已预定 · 冰箱里原料都齐');
-      render();break;
+      saveRes(el);
+      break;
 
     /* 库存 */
     case 'newInv':invSheet(null);break;
@@ -878,48 +956,166 @@ document.addEventListener('click',function(e){
       if(e.target.closest('button'))break;
       invSheet(el.dataset.id);break;
     case 'step':
-      var d=parseInt(el.dataset.d,10);
-      S.inv.forEach(function(it){
-        if(it.id===el.dataset.id)it.qty=Math.max(0,Math.round((it.qty+d)*10)/10);
-      });
-      e.stopPropagation();render();break;
-    case 'saveInv':
-      var nm=document.getElementById('iName').value.trim();
-      if(!nm){toast('写个名字');return}
-      var catBtn=document.querySelector('#iCat .on');
-      var cat=catBtn?catBtn.dataset.c:'food';
-      var q=parseFloat(document.getElementById('iQty').value)||0;
-      var u=document.getElementById('iUnit').value.trim()||'个';
-      var lw=parseFloat(document.getElementById('iLow').value)||0;
-      if(el.dataset.id){
-        S.inv.forEach(function(it){if(it.id===el.dataset.id){it.name=nm;it.cat=cat;it.qty=q;it.unit=u;it.low=lw}});
-      }else{
-        S.inv.push({id:uid(),name:nm,cat:cat,qty:q,unit:u,low:lw});
+      var sd=parseInt(el.dataset.d,10);
+      var it0=invById(el.dataset.id);
+      if(it0){
+        var nv=Math.max(0,Math.round((it0.qty+sd)*10)/10);
+        run(api('PATCH','inventory?id=eq.'+it0.id,{qty:nv},'return=minimal'));
       }
-      closeSheet();render();break;
+      e.stopPropagation();break;
+    case 'saveInv':saveInv(el);break;
     case 'delInv':
       if(el.dataset.armed==='0'){el.dataset.armed='1';el.textContent='再点一次确认删除';return}
-      S.inv=S.inv.filter(function(it){return it.id!==el.dataset.id});
-      closeSheet();toast('已删除');render();break;
+      run(api('DELETE','inventory?id=eq.'+el.dataset.id),function(){closeSheet();toast('已删除')});
+      break;
 
     /* 清单 */
     case 'newShop':shopSheet();break;
     case 'saveShop':
       var sn=document.getElementById('sName').value.trim();
       if(!sn){toast('写点什么要买');return}
-      S.shop.push({id:uid(),name:sn,note:'',done:false});
-      closeSheet();render();break;
+      run(api('POST','shopping',{family_id:AUTH.fid,name:sn,note:'',done:false,created_by:AUTH.me},'return=minimal'),
+        function(){closeSheet()});
+      break;
     case 'shopToggle':
-      S.shop.forEach(function(s){if(s.id===el.dataset.id)s.done=!s.done});
-      render();break;
+      var s0=shopById(el.dataset.id);
+      if(s0)run(api('PATCH','shopping?id=eq.'+s0.id,{done:!s0.done},'return=minimal'));
+      break;
     case 'shopDel':
-      S.shop=S.shop.filter(function(s){return s.id!==el.dataset.id});
-      render();break;
+      run(api('DELETE','shopping?id=eq.'+el.dataset.id));
+      break;
     case 'clearShop':
-      S.shop=S.shop.filter(function(s){return !s.done});
-      render();break;
+      run(api('DELETE','shopping?done=eq.true'));
+      break;
+
+    /* 成员 */
+    case 'leave':
+      closeSheet();logout();toast('已退出 · 随时可以再进来');
+      break;
   }
 });
+
+/* ---------- 写操作实现 ---------- */
+function createGo(btn){
+  var my=document.getElementById('cMe').value.trim();
+  var ta=document.getElementById('cTa').value.trim();
+  if(!my||!ta){toast('两个名字都写上吧');return}
+  if(my===ta){toast('名字得不一样，不然分不清谁是谁');return}
+  btn.disabled=true;toast('正在开门…');
+  var code=genCode();
+  /* 注意：families 插入必须 return=minimal（representation 会被 SELECT 策略拒绝），
+     fid 用 join_family RPC 凭码取回 —— 见 AGENTS.md「数据库约定」 */
+  api('POST','families',{name:'我们的家',invite_code:code},'return=minimal').then(function(){
+    return api('POST','rpc/join_family',{p_code:code});
+  }).then(function(fam){
+    AUTH={fid:fam[0].id,code:code,me:0};
+    return api('POST','members',[
+      {family_id:AUTH.fid,name:my,color:'#D0832F',sort:0},
+      {family_id:AUTH.fid,name:ta,color:'#3E7A66',sort:1}
+    ],'return=representation');
+  }).then(function(ms){
+    AUTH.me=ms[0].id;persistAuth();
+    return sync();
+  }).then(function(){
+    UI.view='home';render();
+    codeSheet(code);
+  }).catch(function(err){
+    toast('开不了门，稍后再试');
+  }).then(function(){btn.disabled=false});
+}
+
+function joinGo(btn){
+  var code=(document.getElementById('joinCode').value||'').trim().toUpperCase();
+  if(!code){toast('输入家庭邀请码');return}
+  btn.disabled=true;toast('正在对钥匙…');
+  api('POST','rpc/join_family',{p_code:code}).then(function(r){
+    if(!r||!r.length)throw new Error('badcode');
+    AUTH={fid:r[0].id,code:code,me:0};
+    return api('GET','members?select=*&order=sort.asc');
+  }).then(function(ms){
+    if(!ms||!ms.length)throw new Error('nomember');
+    sync(); /* 后台拉数据 */
+    pickSheet(ms);
+  }).catch(function(err){
+    var msg=String(err&&err.message||'');
+    if(msg.indexOf('badcode')>=0)toast('邀请码不对，再看看');
+    else if(msg.indexOf('nomember')>=0){AUTH=null;toast('这个家还没有成员，先联系创建人')}
+    else toast('连不上云端，稍后再试');
+  }).then(function(){btn.disabled=false});
+}
+
+function copyText(t){
+  if(!t)return;
+  try{
+    navigator.clipboard.writeText(t).then(function(){toast('复制好了')},function(){toast('复制没成功，长按手动复制')});
+  }catch(_){toast('复制没成功，长按手动复制')}
+}
+
+function saveDish(el){
+  var name=document.getElementById('dName').value.trim();
+  var ings=readIngs();
+  if(!name){toast('先起个菜名');return}
+  if(!ings.length){toast('至少写一样材料');return}
+  var cooks=[];
+  document.querySelectorAll('#cookChips .mchip').forEach(function(ch){
+    if(ch.classList.contains('on'))cooks.push(parseInt(ch.dataset.mid,10));
+  });
+  if(!cooks.length)cooks=[AUTH.me];
+  var n={k:parseInt(document.getElementById('nK').value,10)||0,
+         p:parseInt(document.getElementById('nP').value,10)||0,
+         c:parseInt(document.getElementById('nC').value,10)||0,
+         f:parseInt(document.getElementById('nF').value,10)||0};
+  var sv=parseInt(document.getElementById('dServ').value,10)||2;
+  var payload={name:name,servings:sv,ingredients:ings,nutri:n,est:true,cooks:cooks};
+  var p;
+  if(el.dataset.id){
+    p=api('PATCH','dishes?id=eq.'+el.dataset.id,payload,'return=minimal');
+  }else{
+    payload.family_id=AUTH.fid;
+    payload.created_by=AUTH.me;
+    p=api('POST','dishes',payload,'return=minimal');
+  }
+  run(p,function(){
+    closeSheet();UI.ktab='menu';
+    toast(el.dataset.id?('已更新 · '+name):('上架了 · '+name));
+  });
+}
+
+function saveRes(el){
+  var dateBtn=document.querySelector('#resDate .on');
+  var date=isoAdd(parseInt(dateBtn.dataset.d,10)||0);
+  var time=document.getElementById('resTime').value||'18:30';
+  var cookBtn=document.querySelector('#resCook .on');
+  var cook=cookBtn?cookBtn.dataset.mid:null;
+  cook=cook?parseInt(cook,10):null;
+  var d1=dish(el.dataset.id);
+  run(api('POST','reservations',{family_id:AUTH.fid,dish_id:d1.id,date:date,time:time,cook_id:cook,created_by:AUTH.me},'return=minimal')
+    .then(function(){return checkInv(d1)}).then(function(missing){
+      closeSheet();UI.view='kitchen';UI.ktab='res';
+      render();
+      toast(missing.length?('已预定 · 缺 '+missing.length+' 样原料，已进购物清单'):'已预定 · 冰箱里原料都齐');
+    }));
+}
+
+function saveInv(el){
+  var nm=document.getElementById('iName').value.trim();
+  if(!nm){toast('写个名字');return}
+  var catBtn=document.querySelector('#iCat .on');
+  var cat=catBtn?catBtn.dataset.c:'food';
+  var q=parseFloat(document.getElementById('iQty').value)||0;
+  var u=document.getElementById('iUnit').value.trim()||'个';
+  var lw=parseFloat(document.getElementById('iLow').value)||0;
+  var payload={name:nm,cat:cat,qty:q,unit:u,low:lw};
+  var p;
+  if(el.dataset.id){
+    payload.updated_at=new Date().toISOString();
+    p=api('PATCH','inventory?id=eq.'+el.dataset.id,payload,'return=minimal');
+  }else{
+    payload.family_id=AUTH.fid;
+    p=api('POST','inventory',payload,'return=minimal');
+  }
+  run(p,function(){closeSheet()});
+}
 
 /* 弹层内单选 chips（mchip / seg2） */
 document.addEventListener('click',function(e){
@@ -930,35 +1126,55 @@ document.addEventListener('click',function(e){
   if(group.id==='cookChips'){
     ch.classList.toggle('on');return; /* 多选 */
   }
+  if(group.id==='pickMe'){
+    AUTH.me=parseInt(ch.dataset.mid,10);persistAuth();
+    closeSheet();
+    UI.view='home';render();
+    toast('回来了 · '+(member(AUTH.me)||{}).name);
+    return;
+  }
   group.querySelectorAll('.mchip,.seg2 button,button').forEach(function(x){x.classList.remove('on')});
   ch.classList.add('on');
   if(group.id==='meSel'){
-    S.me=parseInt(ch.dataset.mid,10);
-    group.querySelectorAll('input[data-rename]').forEach(function(inp){
-      var m=member(parseInt(inp.dataset.rename,10));
-      if(m&&inp.value.trim())m.name=inp.value.trim();
-    });
-    renderMeChip();renderHome();
-    toast('切到 '+(member(S.me)||{}).name);
-  }
-});
-document.addEventListener('input',function(e){
-  var inp=e.target.closest('input[data-rename]');
-  if(inp){
-    var m=member(parseInt(inp.dataset.rename,10));
-    if(m){m.name=inp.value.trim()||m.name;renderMeChip();renderHome();save()}
+    AUTH.me=parseInt(ch.dataset.mid,10);persistAuth();
+    renderMeChip();
+    toast('切到 '+(member(AUTH.me)||{}).name);
   }
 });
 
+/* 改名（防抖 → PATCH） */
+var renameTid;
+document.addEventListener('input',function(e){
+  var inp=e.target.closest('input[data-rename]');
+  if(!inp)return;
+  clearTimeout(renameTid);
+  var mid=parseInt(inp.dataset.rename,10),val=inp.value.trim();
+  if(!val)return;
+  renameTid=setTimeout(function(){
+    var m=member(mid);
+    if(m)m.name=val;
+    renderMeChip();renderHome();
+    api('PATCH','members?id=eq.'+mid,{name:val},'return=minimal').catch(function(){toast('名字没同步成功')});
+  },600);
+});
+
 /* 头部 */
-document.getElementById('backBtn').addEventListener('click',function(){S.ui.view='home';render()});
+document.getElementById('backBtn').addEventListener('click',function(){UI.view='home';render()});
 document.getElementById('todayCard').addEventListener('click',function(){
-  S.ui.view='kitchen';S.ui.ktab='res';render();
+  UI.view='kitchen';UI.ktab='res';render();
 });
-document.getElementById('meChip').addEventListener('click',memberSheet);
+document.getElementById('meChip').addEventListener('click',function(){
+  if(AUTH&&D.members.length)memberSheet();
+});
 document.querySelectorAll('.ktab button').forEach(function(b){
-  b.addEventListener('click',function(){S.ui.ktab=b.dataset.tab;render()});
+  b.addEventListener('click',function(){UI.ktab=b.dataset.tab;render()});
 });
+
+/* 同步节奏：启动 / 回到前台 / 每 60 秒 */
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden&&AUTH)sync();
+});
+setInterval(function(){if(AUTH)sync()},60000);
 
 /* 主题 */
 var sun=document.getElementById('icoSun'),moon=document.getElementById('icoMoon');
@@ -979,6 +1195,14 @@ var savedTheme=null;
 try{savedTheme=localStorage.getItem('jia-theme')}catch(_){}
 applyTheme(savedTheme||'system');
 
-render();
+/* 启动 */
+if(AUTH){
+  UI.view='home';
+  render();          /* 先画缓存，快 */
+  sync(true);        /* 再拉云端 */
+}else{
+  UI.view='join';
+  render();
+}
 })();
 </script>
