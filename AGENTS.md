@@ -15,7 +15,7 @@
 - **单文件 `index.html`**（~1200 行），无构建、无依赖、无框架。这是产品决策：先以最直接的手机网页形式落地，未来可平移微信小程序/App。加构建工具链之前先和维护者讨论。
 - 字体走 Google Fonts（Noto Sans SC + ZCOOL XiaoWei），其余全内联。
 - JS 是 ES5 风格（`var` / `function` / 字符串拼 HTML）——**保持风格一致**，不要局部引入 ES Module / JSX。
-- 渲染：状态 → `render()` 全量重画（数据量小，够用）。事件用委托：`[data-act]` / `[data-nav]`。
+- 渲染：状态 → `render()` 全量重画（数据量小，够用）。事件用委托：`[data-act]` / `[data-nav]`。**`el.dataset.*` 拿到的永远是字符串**——与数字 id 比对前必须 `parseInt`（曾因 `2==="2"` 让「编辑菜品」打开永远是空白新建态）。
 
 ## 架构分层
 
