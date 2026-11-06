@@ -111,3 +111,35 @@ create index on public.dishes       (family_id);
 create index on public.inventory    (family_id);
 create index on public.reservations (family_id);
 create index on public.shopping     (family_id);
+
+-- ============================================================
+-- ▼▼▼ v0.3 · 卧室：生理期记录（追加段，2026-11-06）▼▼▼
+-- 已运行过上面 v0.2 的库：只需复制本标记以下的内容到 SQL Editor 运行
+--
+-- 客户端约定（写代码前必读）：
+-- 3. periods 写入用 upsert —— POST periods?on_conflict=family_id,member_id,start_date
+--    并带 Prefer: resolution=merge-duplicates,return=minimal，
+--    同一人同一天重复记/补录不会报错，只会更新备注
+-- ============================================================
+
+create table public.periods (
+  id         bigint generated always as identity primary key,
+  family_id  uuid not null references public.families(id) on delete cascade,
+  member_id  bigint not null references public.members(id) on delete cascade,
+  start_date date not null,
+  note       text not null default '',
+  created_by bigint,
+  created_at timestamptz not null default now()
+);
+
+alter table public.periods enable row level security;
+create policy "period all" on public.periods for all
+  using (family_id = public.current_family_id())
+  with check (family_id = public.current_family_id());
+
+create unique index on public.periods (family_id, member_id, start_date);
+create index on public.periods (family_id);
+
+-- 家庭删除：凭码可删自己的家（级联清空子表）—— 也用于清理冒烟测试残留
+create policy "family delete" on public.families for delete
+  using (id = public.current_family_id());
