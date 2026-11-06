@@ -115,6 +115,10 @@ svg text{user-select:none}
 .vhead .vt{font-size:15px;font-weight:700}
 .vhead .vs{font-size:11.5px;color:var(--ink2);margin-top:2px}
 .stack{display:flex;flex-direction:column;gap:10px}
+/* 猫角 · 嵌入猫猫管家的房间窗口 */
+.catframe{position:relative;border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden;height:70vh}
+.catframe iframe{display:block;width:100%;height:100%;border:0;background:var(--surface)}
+.catload{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink2);font-size:13px;background:var(--surface)}
 
 /* 厨房 */
 .ktab{display:flex;gap:6px;margin-bottom:12px}
@@ -389,7 +393,7 @@ svg text{user-select:none}
         <rect class="hot" data-nav="soon" data-room="study" x="203" y="158" width="127" height="122" rx="10" tabindex="0" aria-label="书房"/>
         <rect class="hot" data-nav="kitchen" x="30" y="292" width="160" height="120" rx="10" tabindex="0" aria-label="厨房"/>
         <rect class="hot" data-nav="fridge" x="148" y="288" width="40" height="124" rx="10" tabindex="0" aria-label="冰箱"/>
-        <rect class="hot" data-nav="soon" data-room="cat" x="198" y="292" width="62" height="120" rx="10" tabindex="0" aria-label="猫角"/>
+        <rect class="hot" data-nav="cat" x="198" y="292" width="62" height="120" rx="10" tabindex="0" aria-label="猫角 · 猫猫管家"/>
         <rect class="hot" data-nav="list" x="268" y="292" width="62" height="120" rx="10" tabindex="0" aria-label="玄关"/>
       </svg>
     </div>
@@ -439,6 +443,18 @@ svg text{user-select:none}
     </div>
     <div class="ptab" id="ptab"></div>
     <div class="stack" id="cycleBody"></div>
+  </section>
+
+  <!-- ============ 猫角 · 猫猫管家（同源 iframe 嵌入 cat-health） ============ -->
+  <section class="view" id="v-cat">
+    <div class="vhead">
+      <div><div class="vt">猫猫管家</div><div class="vs">猫角 · 体重体温 · 喂药提醒（嵌自猫猫健康）</div></div>
+      <a class="btn ghost small" href="https://neomatay.github.io/cat-health/" target="_blank" rel="noopener">单独打开 ↗</a>
+    </div>
+    <div class="catframe" id="catFrameBox">
+      <iframe id="catFrame" title="猫猫管家"></iframe>
+      <div class="catload" id="catLoad">正在把猫角收拾出来…</div>
+    </div>
   </section>
 </div>
 
@@ -677,9 +693,9 @@ function openRes(){
 }
 
 /* ---------- 渲染 ---------- */
-var TITLES={join:'家',home:'家',kitchen:'厨房 · 家庭餐厅',fridge:'冰箱与库存',list:'购物清单',cycle:'卧室 · 生理期'};
+var TITLES={join:'家',home:'家',kitchen:'厨房 · 家庭餐厅',fridge:'冰箱与库存',list:'购物清单',cycle:'卧室 · 生理期',cat:'猫角 · 猫猫管家'};
 function render(){
-  ['join','home','kitchen','fridge','list','cycle'].forEach(function(v){
+  ['join','home','kitchen','fridge','list','cycle','cat'].forEach(function(v){
     document.getElementById('v-'+v).classList.toggle('on',UI.view===v);
   });
   document.getElementById('vTitle').textContent=TITLES[UI.view]||'家';
@@ -690,6 +706,7 @@ function render(){
   if(UI.view==='fridge')renderFridge();
   if(UI.view==='list')renderList();
   if(UI.view==='cycle')renderCycle();
+  if(UI.view==='cat')renderCat();
 }
 
 function avHtml(m,size){
@@ -703,6 +720,43 @@ function renderMeChip(){
   var m=member(AUTH.me)||D.members[0];
   el.innerHTML=avHtml(m,22)+'<span>'+esc(m.name)+'</span>';
 }
+
+/* ---------- 猫角：同源 iframe 嵌入 cat-health ----------
+   两个应用同在 neomatay.github.io 域下，共用 localStorage，
+   猫猫健康的家庭码登录态直接带进来，数据走它自己的 Supabase。
+   主题桥接：把「家」的三态主题写进 iframe 的 :root[data-theme]，
+   cat-health 的皮肤（v2.7+）按该属性切换暖色亮/暗。 */
+var CAT_URL='https://neomatay.github.io/cat-health/';
+function catLayout(){
+  var box=document.getElementById('catFrameBox');
+  if(!box)return;
+  var top=box.getBoundingClientRect().top;
+  box.style.height=Math.max(320,window.innerHeight-top-32)+'px';
+}
+function catTheme(){
+  try{
+    var doc=document.getElementById('catFrame').contentDocument;
+    if(!doc||!doc.documentElement)return;
+    var t=document.documentElement.dataset.theme;
+    if(t==='dark'||t==='light')doc.documentElement.dataset.theme=t;
+    else delete doc.documentElement.dataset.theme;
+  }catch(_){} /* 本地调试时 iframe 跨源，静默跳过 */
+}
+function renderCat(){
+  var f=document.getElementById('catFrame');
+  if(!f)return;
+  if(!f.dataset.booted){
+    f.dataset.booted='1';
+    f.addEventListener('load',function(){
+      var l=document.getElementById('catLoad');
+      if(l)l.style.display='none';
+      catTheme();
+    });
+    f.src=CAT_URL; /* 只在第一次进猫角时加载，之后常驻（切走只是隐藏，状态不丢） */
+  }
+  catLayout();
+}
+window.addEventListener('resize',catLayout);
 
 function renderHome(){
   var h=new Date().getHours();
@@ -1167,7 +1221,7 @@ document.addEventListener('click',function(e){
   if(e.target.closest('[data-stop]')&&!e.target.closest('[data-act^="step"]'))return;
   if(el.dataset.nav){
     if(el.dataset.nav==='soon'){
-      var msgs={study:'书房还没整理好 —— 账本在排队',cat:'猫角还没整理好 —— 三只猫二期搬进来'};
+      var msgs={study:'书房还没整理好 —— 账本在排队'};
       toast(msgs[el.dataset.room]||'还没有整理好');
       return;
     }
@@ -1532,6 +1586,7 @@ function applyTheme(t){
   var dark=t==='dark'||(t==null&&matchMedia('(prefers-color-scheme: dark)').matches);
   sun.hidden=dark;moon.hidden=!dark;
   try{localStorage.setItem('jia-theme',t||'system')}catch(_){}
+  catTheme(); /* 同步猫角 iframe 的主题 */
 }
 document.getElementById('themeBtn').addEventListener('click',function(){
   var cur=document.documentElement.dataset.theme;
