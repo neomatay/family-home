@@ -41,7 +41,7 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 
 1. **子表 INSERT 必须显式带 `family_id`**。members/dishes/inventory/reservations/shopping/periods 的策略是 `with check (family_id = current_family_id())`，NULL 永远不成立 → 42501。
 2. **families INSERT 必须 `Prefer: return=minimal`**。`return=representation` 要求新行同时过 SELECT 策略（此时还没有 fid）→ 42501。fid 用 `rpc/join_family` 凭码取回。应用里 `createGo()` 就是这两步的参考实现。
-3. **periods 写入用 upsert**：`POST periods?on_conflict=family_id,member_id,start_date` + `Prefer: resolution=merge-duplicates,return=minimal`。同人同一天重复记/批量补录不会报错，只更新备注（表上有对应唯一索引）。
+3. **periods 写入用 upsert**：`POST periods?on_conflict=family_id,member_id,start_date` + `Prefer: resolution=merge-duplicates,return=minimal`。同人同一天重复记/批量导入不会报错，只更新备注（表上有对应唯一索引）。编辑一条记录 = 先 upsert 到新位置，若人/日期变了再 `DELETE periods?id=eq.<旧id>`（挪动；目标日已有记录时两条合并）。
 
 ## 同步策略
 
@@ -56,7 +56,8 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 - **状态呈现只用小圆点/角标**，不用彩色左边条（产品品味，参考 yetone/magpie 的克制风格）。
 - 新房间上线 = SVG 加一个 `<rect class="hot" data-nav="...">` + 一个 `<section class="view" id="v-...">` + `TITLES` 注册；没上线的房间保持置灰 +「还没有整理好」。
 - localStorage 只存三样：`jia-auth-v2`（口令）、`jia-cache-v2`（首屏缓存）、`jia-theme`。**业务数据一律在云端**。
-- toast 只做轻提示；破坏性操作用两段式按钮（`data-armed`），不用 confirm()。
+- toast 只做轻提示；破坏性操作用两段式按钮（`data-armed`），不用 confirm()。待确认状态在点击页面任何其他地方时自动解除（`disarmAll`），不允许把用户困在「确认」里。
+- 生理期列表行的删除不在行上，而是点行进编辑弹层，删除按钮在弹层里（点遮罩/✕ 即无害退出）。
 
 ## 营养估算
 
