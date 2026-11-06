@@ -14,8 +14,9 @@
 
 - 在线版（GitHub Pages）：见 About 栏链接
 - 本地运行：`python3 -m http.server` 后浏览器打开
-- v0.1 数据保存在本机浏览器（localStorage），换设备不同步 —— 云端协作（Supabase）在路上
+- **v0.2 云端协作**：首次打开创建「家」会生成家庭邀请码，另一台手机输入同一邀请码即加入同一份云端数据（Supabase，行级安全按邀请码隔离）
+- 建表 SQL 在 [supabase/migration.sql](supabase/migration.sql)（在 Supabase Dashboard → SQL Editor 运行一次即可）
 
 ## 技术形态
 
-单文件 `index.html`，无构建、无依赖，明暗双主题，375px 移动端优先。数据结构与 Supabase 目标表同构（见 [docs/PRD-v0.1.md](docs/PRD-v0.1.md)），未来可迁移微信小程序。
+单文件 `index.html`，无构建、无依赖，明暗双主题，375px 移动端优先。数据存 Supabase（fetch 直连 REST，publishable key + 行级安全），见 [docs/PRD-v0.1.md](docs/PRD-v0.1.md)，未来可迁移微信小程序。
