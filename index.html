@@ -218,6 +218,9 @@ svg text{user-select:none}
 .ingrow .q{flex:1;min-width:0}
 .ingrow .u{flex:1;min-width:0}
 .ingrow .rm{width:30px;height:38px;border:none;background:none;color:var(--ink2);font-size:16px;cursor:pointer;flex:none}
+.ingrow .drag{flex:none;width:28px;height:38px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink2);font-size:15px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.ingrow.dragging{position:relative;z-index:5;background:var(--surface);border-radius:9px;box-shadow:0 4px 16px rgba(0,0,0,.16)}
+.ingrow.dragging .drag{cursor:grabbing}
 .seg2{display:flex;gap:6px}
 .seg2 button{flex:1;padding:8px 2px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:12.5px;cursor:pointer}
 .seg2 button.on{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
@@ -904,6 +907,7 @@ function shHead(title){
 }
 function ingRowHtml(ing){
   return '<div class="ingrow">'+
+    '<span class="drag" aria-label="拖动调整顺序">☰</span>'+
     '<input class="finput n" placeholder="食材" value="'+esc(ing.name)+'">'+
     '<input class="finput q" type="number" inputmode="decimal" placeholder="数量" value="'+esc(ing.qty)+'">'+
     '<input class="finput u" placeholder="克/个" value="'+esc(ing.unit)+'">'+
@@ -944,7 +948,7 @@ function dishSheet(id){
   var cooks=d?d.cooks.slice():[AUTH.me];
   openSheet(shHead(d?'编辑菜品':'上架新菜')+
     '<div class="flabel">菜名</div><input class="finput" id="dName" value="'+esc(d?d.name:'')+'" placeholder="比如：番茄牛腩">'+
-    '<div class="flabel">材料（做什么用多少）</div><div id="ingRows">'+
+    '<div class="flabel">材料（做什么用多少 · 拖 ☰ 调顺序）</div><div id="ingRows">'+
     ings.map(ingRowHtml).join('')+'</div>'+
     '<button class="btn ghost small" data-act="addIng">＋ 加一样食材</button>'+
     '<div class="flabel">几人份</div><input class="finput" id="dServ" type="number" inputmode="numeric" value="'+(d?d.servings:2)+'" style="max-width:120px">'+
@@ -1093,6 +1097,50 @@ function readIngs(){
   });
   return rows;
 }
+
+/* 材料行拖动排序：拖 ☰ 换位置，保存时按当前顺序写入（readIngs 依 DOM 顺序） */
+var ingDrag={row:null,startY:0,startTop:0};
+document.addEventListener('pointerdown',function(e){
+  var h=e.target.closest('.ingrow .drag');
+  if(!h)return;
+  var row=h.closest('.ingrow');
+  ingDrag.row=row;
+  ingDrag.startY=e.clientY;
+  ingDrag.startTop=row.offsetTop;
+  row.classList.add('dragging');
+  try{h.setPointerCapture(e.pointerId)}catch(_){}
+  e.preventDefault();
+});
+document.addEventListener('pointermove',function(e){
+  var row=ingDrag.row;
+  if(!row)return;
+  var dy=e.clientY-ingDrag.startY;
+  row.style.top=dy+'px';
+  var box=row.parentElement;
+  var sib=dy<0?row.previousElementSibling:row.nextElementSibling;
+  while(sib&&sib.classList.contains('ingrow')){
+    var sibMid=sib.offsetTop+sib.offsetHeight/2;
+    var myMid=ingDrag.startTop+row.offsetHeight/2+dy;
+    if(dy<0&&myMid<sibMid){
+      box.insertBefore(row,sib);       /* 上移：插到前一行前面 */
+    }else if(dy>0&&myMid>sibMid){
+      box.insertBefore(sib,row);       /* 下移：后一行插到我前面 */
+    }else break;
+    row.style.top='0px';
+    ingDrag.startTop=row.offsetTop;
+    ingDrag.startY=e.clientY;
+    dy=0;
+    sib=row.nextElementSibling;
+  }
+});
+function ingDragEnd(){
+  if(!ingDrag.row)return;
+  ingDrag.row.classList.remove('dragging');
+  ingDrag.row.style.top='';
+  ingDrag.row=null;
+}
+document.addEventListener('pointerup',ingDragEnd);
+document.addEventListener('pointercancel',ingDragEnd);
 
 /* 两段式确认：点别处自动解除（否则一旦点了「确认」就被困住） */
 function armBtn(b){
