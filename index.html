@@ -170,11 +170,12 @@ svg text{user-select:none}
 .stab{font-size:10.5px;border:1px solid var(--line);border-radius:999px;padding:2.5px 9px;font-weight:400}
 .stab.ok{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
 .stab.warn{color:var(--dot-on);border-color:color-mix(in srgb,var(--dot-on) 45%,var(--line))}
-.prow{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:11px 13px;margin-bottom:7px}
+.prow{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:11px 13px;margin-bottom:7px;cursor:pointer}
 .prow .pdate{flex:1;min-width:0;font-size:14px;font-weight:500}
 .prow .pdate .sub{display:block;font-size:11px;color:var(--ink2);font-weight:400;margin-top:1px;line-height:1.6}
 .prow .pdate .sub .now{color:var(--dot-on)}
-.prow .x{width:26px;height:26px;border:none;background:none;color:var(--ink2);font-size:14px;cursor:pointer;flex:none}
+.prow .x{height:26px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ink2);font-size:12px;cursor:pointer;flex:none;line-height:1}
+.hint.dup{color:var(--dot-on)}
 
 /* 进门（引导） */
 #v-join{padding-top:9vh}
@@ -429,7 +430,7 @@ svg text{user-select:none}
     <div class="vhead">
       <div><div class="vt">生理期记录</div><div class="vs">卧室 · 记日期 · 看周期稳不稳</div></div>
       <div style="display:flex;gap:8px;flex:none">
-        <button class="btn ghost small" data-act="periodImport">补录</button>
+        <button class="btn ghost small" data-act="periodImport">批量导入</button>
         <button class="btn small" data-act="periodNew">记一笔</button>
       </div>
     </div>
@@ -500,6 +501,18 @@ function fullDateLabel(iso){
 function cycleData(mid){ /* 某成员的记录，按日期升序 */
   return D.periods.filter(function(p){return p.member===mid})
     .sort(function(a,b){return a.date<b.date?-1:1});
+}
+function periodById(id){ /* 按 id 找一条记录（编辑用） */
+  id=parseInt(id,10);
+  for(var i=0;i<D.periods.length;i++)if(D.periods[i].id===id)return D.periods[i];
+  return null;
+}
+function periodFind(mid,iso){ /* 找某人某天是否已有记录 */
+  for(var i=0;i<D.periods.length;i++){
+    var p=D.periods[i];
+    if(p.member===mid&&p.date===iso)return p;
+  }
+  return null;
 }
 function gapsOf(ascList){ /* 相邻两次的间隔天数 */
   var g=[];
@@ -835,7 +848,7 @@ function renderCycle(){
   var list=cycleData(UI.ptab); /* 升序 */
   var body=document.getElementById('cycleBody');
   if(!list.length){
-    body.innerHTML='<div class="empty">'+esc(me?me.name:'')+'还没有记录<br>点右上「记一笔」；过去几年的用「补录」一次搬进来</div>';
+    body.innerHTML='<div class="empty">'+esc(me?me.name:'')+'还没有记录<br>点右上「记一笔」；过去几年的用「批量导入」一次搬进来</div>';
     return;
   }
   var n=list.length;
@@ -867,10 +880,10 @@ function renderCycle(){
     if(active)sub.push('<span class="now">第 '+(dd+1)+' 天</span>');
     sub.push(gap!=null?('间隔 '+gap+' 天'):'最早一条');
     if(p.note)sub.push(esc(p.note));
-    html+='<div class="prow">'+
+    html+='<div class="prow" data-act="periodEdit" data-id="'+p.id+'" role="button" tabindex="0" aria-label="编辑这条记录">'+
       (active?'<span class="d pulse"></span>':'<span class="d mut"></span>')+
       '<div class="pdate">'+fullDateLabel(p.date)+'<span class="sub">'+sub.join(' · ')+'</span></div>'+
-      '<button class="x" data-act="periodDel" data-id="'+p.id+'" data-armed="0" aria-label="删除">✕</button>'+
+      '<span class="x">编辑</span>'+
     '</div>';
   }
   body.innerHTML=html;
@@ -1001,6 +1014,23 @@ function whoChips(id){
   }).join('')+'</div>';
 }
 
+function periodCheckExisting(){ /* 记一笔：所选人+日期已有记录时带出备注（接着写=追加） */
+  var hint=document.getElementById('pDup');
+  if(!hint)return; /* 编辑弹层里没有 pDup，跳过 */
+  var who=document.querySelector('#pWho .on');
+  var mid=who?parseInt(who.dataset.mid,10):UI.ptab;
+  var d=document.getElementById('pDate'),note=document.getElementById('pNote');
+  var hit=periodFind(mid,d.value);
+  if(hit){
+    hint.classList.add('dup');
+    hint.innerHTML='这一天已经记过了 · 备注已带出，接着往下写就是补充，保存只更新这一条，不会算两次。';
+    note.value=hit.note||'';
+  }else{
+    hint.classList.remove('dup');
+    hint.innerHTML='记开始那天就行；周期和稳定性会自动算。';
+    note.value='';
+  }
+}
 function periodSheet(){
   openSheet(shHead('记一笔 · 生理期')+
     '<div class="flabel">谁的</div>'+whoChips('pWho')+
@@ -1008,17 +1038,31 @@ function periodSheet(){
     '<input class="finput" id="pDate" type="date" value="'+todayIso()+'" style="max-width:180px">'+
     '<div class="flabel">备注（可不填）</div>'+
     '<input class="finput" id="pNote" placeholder="比如：量少 / 肚子疼">'+
-    '<div class="hint">记开始那天就行；周期和稳定性会自动算。同一天重复记不会重复算。</div>'+
+    '<div class="hint" id="pDup">记开始那天就行；周期和稳定性会自动算。</div>'+
     '<div class="sh-actions"><button class="btn" data-act="periodSave">记下</button></div>'
+  );
+  document.getElementById('pDate').addEventListener('change',periodCheckExisting);
+  periodCheckExisting();
+}
+function periodEditSheet(p){
+  openSheet(shHead('编辑这条记录')+
+    '<div class="flabel">谁的</div>'+whoChips('pWho')+
+    '<div class="flabel">哪天来的</div>'+
+    '<input class="finput" id="pDate" type="date" value="'+p.date+'" style="max-width:180px">'+
+    '<div class="flabel">备注（可不填）</div>'+
+    '<input class="finput" id="pNote" value="'+esc(p.note||'')+'" placeholder="比如：量少 / 肚子疼">'+
+    '<div class="hint">改了日期或换成另一个人，保存后这条会挪过去；如果那天已经有记录，两条会合成一条。点空白处或 ✕ 都是不改直接退出。</div>'+
+    '<div class="sh-actions"><button class="btn" data-act="periodEditSave" data-id="'+p.id+'">保存</button></div>'+
+    '<div class="sh-actions" style="margin-top:9px"><button class="btn danger" data-act="periodEditDel" data-id="'+p.id+'" data-armed="0">删除这条</button></div>'
   );
 }
 
 function periodImportSheet(){
-  openSheet(shHead('补录历史记录')+
-    '<div class="flabel">补到谁的记录里</div>'+whoChips('pWho')+
+  openSheet(shHead('批量导入历史记录')+
+    '<div class="flabel">导入到谁的记录里</div>'+whoChips('pWho')+
     '<div class="flabel">每行一条：日期 + 可选备注</div>'+
     '<textarea class="finput" id="pBulk" rows="9" style="height:auto;line-height:2" placeholder="2023-01-05&#10;2023-02-01 提前了几天&#10;2023.3.6&#10;2023/4/2 量大"></textarea>'+
-    '<div class="hint">支持 2023-01-05 / 2023.3.6 / 2023/4/2 三种写法，备注跟在日期后面；已记过的日期只更新备注，不会重复。</div>'+
+    '<div class="hint">支持 2023-01-05 / 2023.3.6 / 2023/4/2 三种写法，备注跟在日期后面；已记过的日期只更新备注，不会重复。单条的补充用「记一笔」就行。</div>'+
     '<div class="sh-actions"><button class="btn" data-act="periodImportGo">全部记入</button></div>'
   );
 }
@@ -1050,8 +1094,25 @@ function readIngs(){
   return rows;
 }
 
+/* 两段式确认：点别处自动解除（否则一旦点了「确认」就被困住） */
+function armBtn(b){
+  if(b.dataset.armed==='1')return false;
+  b.dataset.orig=b.textContent;
+  b.dataset.armed='1';
+  b.textContent='再点一次确认删除';
+  return true;
+}
+function disarmAll(except){
+  document.querySelectorAll('[data-armed]').forEach(function(b){
+    if(b===except||b.dataset.armed!=='1')return;
+    b.dataset.armed='0';
+    if(b.dataset.orig){b.textContent=b.dataset.orig;delete b.dataset.orig;}
+  });
+}
+
 document.addEventListener('click',function(e){
   var el=e.target.closest('[data-act],[data-nav]');
+  disarmAll(el); /* 任何一次点击都会解除别的按钮的待确认状态 */
   if(!el)return;
   /* 房间导航 */
   if(e.target.closest('[data-stop]')&&!e.target.closest('[data-act^="step"]'))return;
@@ -1113,7 +1174,7 @@ document.addEventListener('click',function(e){
       toast(est.unknown?('估好了 · '+est.unknown+' 样不在库里，按均值估'):'估好了 · 可手动微调');break;
     case 'saveDish':saveDish(el);break;
     case 'delDish':
-      if(el.dataset.armed==='0'){el.dataset.armed='1';el.textContent='再点一次确认删除';return}
+      if(armBtn(el))return;
       run(api('DELETE','dishes?id=eq.'+el.dataset.id).then(function(){
         /* 预定会随外键级联删除 */
       }),function(){closeSheet();toast('已删除')});
@@ -1139,7 +1200,7 @@ document.addEventListener('click',function(e){
       e.stopPropagation();break;
     case 'saveInv':saveInv(el);break;
     case 'delInv':
-      if(el.dataset.armed==='0'){el.dataset.armed='1';el.textContent='再点一次确认删除';return}
+      if(armBtn(el))return;
       run(api('DELETE','inventory?id=eq.'+el.dataset.id),function(){closeSheet();toast('已删除')});
       break;
 
@@ -1173,16 +1234,41 @@ document.addEventListener('click',function(e){
       if(!/^\d{4}-\d{2}-\d{2}$/.test(pdate)){toast('选一下日期');return}
       var pnote=document.getElementById('pNote').value.trim();
       UI.ptab=pmid;
+      var wasDup=!!periodFind(pmid,pdate);
       /* upsert：同人同一天只更新备注，不产生重复 */
       run(api('POST','periods?on_conflict=family_id,member_id,start_date',
         {family_id:AUTH.fid,member_id:pmid,start_date:pdate,note:pnote,created_by:AUTH.me},
         'resolution=merge-duplicates,return=minimal'),
-        function(){closeSheet();toast('记下了 · '+dateLabel(pdate))});
+        function(){closeSheet();toast((wasDup?'备注已更新 · ':'记下了 · ')+dateLabel(pdate))});
       break;
     }
-    case 'periodDel':
-      if(el.dataset.armed==='0'){el.dataset.armed='1';el.textContent='确认';el.style.color='var(--danger)';return}
-      run(api('DELETE','periods?id=eq.'+el.dataset.id));
+    case 'periodEdit':{
+      var pe=periodById(el.dataset.id);
+      if(pe)periodEditSheet(pe);
+      break;
+    }
+    case 'periodEditSave':{
+      var p0=periodById(el.dataset.id);
+      if(!p0){closeSheet();return}
+      var who3=document.querySelector('#pWho .on');
+      var emid=who3?parseInt(who3.dataset.mid,10):p0.member;
+      var edate=document.getElementById('pDate').value;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(edate)){toast('选一下日期');return}
+      var enote=document.getElementById('pNote').value.trim();
+      UI.ptab=emid;
+      /* upsert 到新位置；改了人/日期时把旧的那条删掉（挪动） */
+      var ep=api('POST','periods?on_conflict=family_id,member_id,start_date',
+        {family_id:AUTH.fid,member_id:emid,start_date:edate,note:enote,created_by:AUTH.me},
+        'resolution=merge-duplicates,return=minimal');
+      if(emid!==p0.member||edate!==p0.date){
+        ep=ep.then(function(){return api('DELETE','periods?id=eq.'+p0.id)});
+      }
+      run(ep,function(){closeSheet();toast('已保存')});
+      break;
+    }
+    case 'periodEditDel':
+      if(armBtn(el))return;
+      run(api('DELETE','periods?id=eq.'+el.dataset.id),function(){closeSheet();toast('已删除')});
       break;
     case 'periodImport':periodImportSheet();break;
     case 'periodImportGo':{
@@ -1351,6 +1437,7 @@ document.addEventListener('click',function(e){
     renderMeChip();
     toast('切到 '+(member(AUTH.me)||{}).name);
   }
+  if(group.id==='pWho')periodCheckExisting(); /* 记一笔：换人后重新检查该天是否已记录 */
 });
 
 /* 改名（防抖 → PATCH） */
