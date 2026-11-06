@@ -462,10 +462,11 @@ var busy=false;  /* 同步中 */
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function member(id){for(var i=0;i<D.members.length;i++)if(D.members[i].id===id)return D.members[i];return null}
-function dish(id){for(var i=0;i<D.dishes.length;i++)if(D.dishes[i].id===id)return D.dishes[i];return null}
-function resById(id){for(var i=0;i<D.res.length;i++)if(D.res[i].id===id)return D.res[i];return null}
-function invById(id){for(var i=0;i<D.inv.length;i++)if(D.inv[i].id===id)return D.inv[i];return null}
-function shopById(id){for(var i=0;i<D.shop.length;i++)if(D.shop[i].id===id)return D.shop[i];return null}
+/* 注意：data-* 传来的 id 是字符串，必须 parseInt 后再严格比较（曾因 2==="2" 导致编辑菜品打开是空的） */
+function dish(id){id=parseInt(id,10);for(var i=0;i<D.dishes.length;i++)if(D.dishes[i].id===id)return D.dishes[i];return null}
+function resById(id){id=parseInt(id,10);for(var i=0;i<D.res.length;i++)if(D.res[i].id===id)return D.res[i];return null}
+function invById(id){id=parseInt(id,10);for(var i=0;i<D.inv.length;i++)if(D.inv[i].id===id)return D.inv[i];return null}
+function shopById(id){id=parseInt(id,10);for(var i=0;i<D.shop.length;i++)if(D.shop[i].id===id)return D.shop[i];return null}
 function persistAuth(){try{localStorage.setItem('jia-auth-v2',JSON.stringify(AUTH))}catch(_){}}
 function persistCache(){try{localStorage.setItem('jia-cache-v2',JSON.stringify(D))}catch(_){}}
 
