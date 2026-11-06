@@ -4,7 +4,7 @@
 
 ## 项目是什么
 
-两个人的家（和三只猫）的家庭协作应用：**手机网页，首页是一栋可点击的矢量剖面小房子（room tour），点房间进功能**。v0.1–v0.3 已点亮：厨房（家庭餐厅：上架菜/预定/接单）、冰箱与库存、购物清单（玄关）、卧室（生理期记录：日期/周期稳定性/预计下次）。书房（账本）、猫角（猫猫管家）在二期池。
+两个人的家（和三只猫）的家庭协作应用：**手机网页，首页是一栋可点击的矢量剖面小房子（room tour），点房间进功能**。v0.1–v0.3 已点亮：厨房（家庭餐厅：上架菜/预定/接单）、冰箱与库存、购物清单（玄关）、卧室（生理期记录：日期/周期稳定性/预计下次）、猫角（猫猫管家，嵌入 cat-health）。书房（账本）在二期池。
 
 - 线上：https://neomatay.github.io/family-home/
 - 仓库：https://github.com/neomatay/family-home
@@ -59,6 +59,16 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 - toast 只做轻提示；破坏性操作用两段式按钮（`data-armed`），不用 confirm()。待确认状态在点击页面任何其他地方时自动解除（`disarmAll`），不允许把用户困在「确认」里。
 - 生理期列表行的删除不在行上，而是点行进编辑弹层，删除按钮在弹层里（点遮罩/✕ 即无害退出）。
 
+## 嵌入式房间（猫角 = cat-health）
+
+猫角**不是本仓库实现的功能**：它是一个同源 iframe，加载 `https://neomatay.github.io/cat-health/`（独立仓库 neomatay/cat-health，Vue3 + ECharts + supabase-js，数据在它**自己的** Supabase 项目 pvprdtfkqqxkwxvstzuo，家庭 UUID 即口令；另有 iOS 原生 App 共用该库）。
+
+- **两个应用同域**（neomatay.github.io），共用 localStorage —— `cat_health_family_id` 登录态直接带进 iframe，无需二次进门。
+- **代码不搬**：cat-health 的功能永远不移植进本仓库单文件（会破坏零依赖纪律）；本仓库也不碰它的数据层。
+- **iframe 常驻**：`renderCat()` 用 `dataset.booted` 保证只加载一次，切走视图只是隐藏，猫猫健康的滚动/弹层状态不丢。
+- **主题桥接**：`catTheme()` 把「家」的三态主题写进 iframe 的 `documentElement.dataset.theme`（无值=跟随系统）；cat-health 侧 v2.7+ 的皮肤已按同一套暖色 token 对齐（见其 style.css 头注）。跨源（本地调试）时 try/catch 静默跳过。
+- 本地调试 `http://<Mac IP>:8924` 时 iframe 指向线上 URL，跨源属预期，只有主题桥接不可用。
+
 ## 营养估算
 
 本地 `FOOD`（每 100g 热量/蛋白/碳水/脂肪）+ `UNIT_G`（单位→克）查表估算，UI 必须带「估算」标记。这是占位方案，正式版换真实 AI —— 接口预留：`estimate(ings, servings)` 签名不动，换实现即可。
@@ -97,7 +107,7 @@ Pages 从 main 自动发布。⚠️ 本地 git 历史与远端不同源（API �
 
 1. realtime 同步（替换 60s 轮询）
 2. 预定的拒绝/换人流转
-3. 猫猫管家（猫角：档案/用药/猫粮猫砂库存）
+3. 猫角状态点：跨 iframe 读猫猫健康的今日待喂药（现阶段圆点仍是「冰箱猫用低库存」）
 4. 卧室健康扩展（体重体脂/训练 —— 生理期记录已上线）
 5. 账本（书房）
 6. AI 插画皮肤（替换矢量背景层）
