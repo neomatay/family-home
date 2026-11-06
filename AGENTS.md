@@ -4,7 +4,7 @@
 
 ## 项目是什么
 
-两个人的家（和三只猫）的家庭协作应用：**手机网页，首页是一栋可点击的矢量剖面小房子（room tour），点房间进功能**。v0.1–v0.2 已点亮：厨房（家庭餐厅：上架菜/预定/接单）、冰箱与库存、购物清单（玄关）。卧室（健康）、书房（账本）、猫角（猫猫管家）在二期池。
+两个人的家（和三只猫）的家庭协作应用：**手机网页，首页是一栋可点击的矢量剖面小房子（room tour），点房间进功能**。v0.1–v0.3 已点亮：厨房（家庭餐厅：上架菜/预定/接单）、冰箱与库存、购物清单（玄关）、卧室（生理期记录：日期/周期稳定性/预计下次）。书房（账本）、猫角（猫猫管家）在二期池。
 
 - 线上：https://neomatay.github.io/family-home/
 - 仓库：https://github.com/neomatay/family-home
@@ -23,9 +23,9 @@
 index.html
 ├── CSS tokens（明暗三态主题）
 ├── <svg> 矢量小家（交互层：.hot 热区 + 状态圆点）
-├── 视图 section（#v-join 进门 / #v-home / #v-kitchen / #v-fridge / #v-list）
+├── 视图 section（#v-join 进门 / #v-home / #v-kitchen / #v-fridge / #v-list / #v-cycle）
 └── <script>（AUTH/D/UI 状态 + api() REST 层 + render + 事件）
-supabase/migration.sql  六张表 + RLS + 校验函数
+supabase/migration.sql  七张表 + RLS + 校验函数（v0.2 段之后是追加段）
 docs/PRD-v0.1.md        产品定义
 ```
 
@@ -39,8 +39,9 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 
 ### 两条硬约定（都是实测 42501 踩出来的坑）
 
-1. **子表 INSERT 必须显式带 `family_id`**。members/dishes/inventory/reservations/shopping 的策略是 `with check (family_id = current_family_id())`，NULL 永远不成立 → 42501。
+1. **子表 INSERT 必须显式带 `family_id`**。members/dishes/inventory/reservations/shopping/periods 的策略是 `with check (family_id = current_family_id())`，NULL 永远不成立 → 42501。
 2. **families INSERT 必须 `Prefer: return=minimal`**。`return=representation` 要求新行同时过 SELECT 策略（此时还没有 fid）→ 42501。fid 用 `rpc/join_family` 凭码取回。应用里 `createGo()` 就是这两步的参考实现。
+3. **periods 写入用 upsert**：`POST periods?on_conflict=family_id,member_id,start_date` + `Prefer: resolution=merge-duplicates,return=minimal`。同人同一天重复记/批量补录不会报错，只更新备注（表上有对应唯一索引）。
 
 ## 同步策略
 
@@ -96,7 +97,7 @@ Pages 从 main 自动发布。⚠️ 本地 git 历史与远端不同源（API �
 1. realtime 同步（替换 60s 轮询）
 2. 预定的拒绝/换人流转
 3. 猫猫管家（猫角：档案/用药/猫粮猫砂库存）
-4. 健康（卧室：体重体脂/训练）
+4. 卧室健康扩展（体重体脂/训练 —— 生理期记录已上线）
 5. 账本（书房）
 6. AI 插画皮肤（替换矢量背景层）
 7. 真·AI 营养估算
