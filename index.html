@@ -1,7 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>家</title>
-<link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+XiaoWei&display=swap">
 <style>
 /* 布局概念：家为导航中枢，房间内页单列卡片工具风 */
@@ -168,70 +167,18 @@ svg text{user-select:none}
 .ptab{display:flex;gap:6px;margin-bottom:12px}
 .ptab button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 4px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:13px;cursor:pointer}
 .ptab button.on{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
-.cycle-overview{padding:16px;margin-bottom:10px;background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
-.cycle-overview .eyebrow{font-size:10.5px;letter-spacing:1.5px;color:var(--ink2)}
-.cycle-primary{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:6px 14px;margin:7px 0 15px}
-.cycle-primary h2{font-size:28px;line-height:1.15;margin:0;font-weight:700;letter-spacing:0}
-.cycle-primary h2 small{font-size:13px;color:var(--ink2);font-weight:400;margin-left:4px;letter-spacing:0}
-.cycle-state{display:flex;align-items:center;gap:6px;color:var(--accent);font-size:12px;white-space:nowrap}
-.cycle-state .d{width:7px;height:7px}
-.cycle-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:13px;border-top:1px solid var(--line)}
-.cycle-metric{min-width:0}
-.cycle-metric span{display:block;color:var(--ink2);font-size:10.5px;margin-bottom:4px;white-space:nowrap}
-.cycle-metric b{display:block;color:var(--ink);font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.cycle-metric b em{font-style:normal;font-size:10px;color:var(--ink2);font-weight:400;margin-left:2px}
-.cycle-metric .muted{font-size:12px;color:var(--ink2);font-weight:500}
-.cycle-due{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 10px;margin-top:13px;padding-top:12px;border-top:1px dashed var(--line);font-size:11px;color:var(--ink2)}
-.cycle-due b{color:var(--ink);font-size:12px;font-weight:600}
-.cycle-due .late{color:var(--dot-on)}
-.cycle-year{padding:15px;margin-bottom:10px}
-.cycle-year-nav{display:flex;align-items:center;gap:9px}
-.cycle-year-nav strong{font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.cycle-year-nav button{width:28px;height:28px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:18px;line-height:1}
-.cycle-year-nav button:disabled{opacity:.35;cursor:default}
-.month-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-.month-cell{min-width:0;min-height:55px;padding:7px 5px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
-.month-cell.filled{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
-.month-cell span{display:block;color:var(--ink2);font-size:10px}
-.month-cell strong{display:block;margin-top:3px;color:var(--ink);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.month-cell:not(.filled) strong{color:var(--ink2);font-weight:400}
-.cycle-trend{padding:15px;margin-bottom:10px}
-.cycle-section-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:5px 10px;margin-bottom:12px}
-.cycle-section-head h3{margin:0;font-size:14px;font-weight:700}
-.cycle-section-head p{margin:3px 0 0;font-size:10.5px;color:var(--ink2)}
-.cycle-average{font-size:10.5px;color:var(--ink2);white-space:nowrap}
-.cycle-average b{color:var(--accent);font-size:12px;font-variant-numeric:tabular-nums}
-.bar-chart{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));align-items:end;gap:7px;height:132px;padding:0 2px 0;border-bottom:1px solid var(--line)}
-.bar-col{display:grid;grid-template-rows:18px 1fr 22px;align-items:end;min-width:0;height:100%;text-align:center}
-.bar-col .bar-value{font-size:9px;color:var(--ink2);font-variant-numeric:tabular-nums}
-.bar-track{height:100%;display:flex;align-items:flex-end;justify-content:center;min-height:1px}
-.bar-track i{display:block;width:min(26px,72%);min-height:7px;border-radius:5px 5px 0 0;background:var(--accent);opacity:.84}
-.bar-col.latest .bar-track i{background:var(--warm);opacity:1}
-.bar-col small{display:block;overflow:hidden;color:var(--ink2);font-size:9px;line-height:22px;white-space:nowrap;text-overflow:ellipsis}
-.cycle-axis{display:flex;align-items:center;gap:5px;margin-top:10px;color:var(--ink2);font-size:10px}
-.cycle-axis i{display:block;width:8px;height:8px;border-radius:2px;background:var(--warm)}
-.cycle-axis span{margin-left:auto}
-.cycle-history{margin-top:2px}
-.cycle-history-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 2px;border:0;background:transparent;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;text-align:left}
-.cycle-history-toggle span{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.cycle-history-toggle small{color:var(--ink2);font-size:10.5px;font-weight:400}
-.cycle-history-toggle .chevron{font-size:15px;transition:transform .2s;flex:none}
-.cycle-history-toggle.open .chevron{transform:rotate(180deg)}
-.cycle-history-list{display:flex;flex-direction:column;gap:7px}
-.history-year{margin:4px 2px 0;color:var(--ink2);font-size:11px;font-weight:600}
-.history-row{width:100%;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--ink);padding:10px 12px;cursor:pointer;text-align:left;font-family:inherit}
-.history-row:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
-.history-dot{width:8px;height:8px;border-radius:50%;background:var(--dot-mut);flex:none}
-.history-date{flex:1;min-width:0}
-.history-date strong{display:block;font-size:14px;font-weight:600}
-.history-date small{display:block;margin-top:2px;color:var(--ink2);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.history-gap{display:flex;align-items:baseline;gap:3px;min-width:70px;justify-content:flex-end}
-.history-gap b{font-size:16px;font-variant-numeric:tabular-nums}
-.history-gap small{color:var(--ink2);font-size:10px}
-.history-edit{display:inline-flex;align-items:center;height:27px;padding:0 9px;border:1px solid var(--line);border-radius:8px;color:var(--ink2);font-size:11px;flex:none}
-@media(max-width:390px){.history-edit{display:none}.history-gap{min-width:62px}.cycle-metric b{font-size:14px}}
-.cycle-more{width:100%;padding:10px 0;border:0;background:transparent;color:var(--accent);font-size:11px;cursor:pointer}
-.cycle-empty{padding:30px 18px}
+.cstat{display:flex;flex-wrap:wrap;gap:10px 22px;row-gap:12px}
+.cstat .it{font-size:11px;color:var(--ink2);letter-spacing:.5px}
+.cstat .it b{display:block;font-size:17px;color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;margin-top:3px}
+.cstat .it b em{font-style:normal;font-size:11px;color:var(--ink2);font-weight:400;margin-left:2px}
+.stab{font-size:10.5px;border:1px solid var(--line);border-radius:999px;padding:2.5px 9px;font-weight:400}
+.stab.ok{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.stab.warn{color:var(--dot-on);border-color:color-mix(in srgb,var(--dot-on) 45%,var(--line))}
+.prow{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:11px 13px;margin-bottom:7px;cursor:pointer}
+.prow .pdate{flex:1;min-width:0;font-size:14px;font-weight:500}
+.prow .pdate .sub{display:block;font-size:11px;color:var(--ink2);font-weight:400;margin-top:1px;line-height:1.6}
+.prow .pdate .sub .now{color:var(--dot-on)}
+.prow .x{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ink2);font-size:12px;cursor:pointer;flex:none;line-height:1}
 .hint.dup{color:var(--dot-on)}
 
 /* 进门（引导） */
@@ -488,7 +435,7 @@ svg text{user-select:none}
   <!-- ============ 卧室 · 生理期 ============ -->
   <section class="view" id="v-cycle">
     <div class="vhead">
-      <div><div class="vt">生理期记录</div><div class="vs">卧室 · 看每月开始日与周期间隔</div></div>
+      <div><div class="vt">生理期记录</div><div class="vs">卧室 · 记日期 · 看周期稳不稳</div></div>
       <div style="display:flex;gap:8px;flex:none">
         <button class="btn ghost small" data-act="periodImport">批量导入</button>
         <button class="btn small" data-act="periodNew">记一笔</button>
@@ -526,7 +473,7 @@ var SUPA_KEY='sb_publishable_sEnTySyQHRHFJ71tWCoekg_Vvoy8ctM';
 /* ---------- 状态 ---------- */
 var AUTH=null;   /* {fid, code, me} 家庭口令，存本机 */
 var D={members:[],dishes:[],inv:[],res:[],shop:[],periods:[],familyName:''};
-var UI={view:'join',ktab:'menu',ptab:null,cycleHistory:false,cycleYear:null};
+var UI={view:'join',ktab:'menu',ptab:null};
 var busy=false;  /* 同步中 */
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -570,17 +517,6 @@ function fullDateLabel(iso){
   var wd=['日','一','二','三','四','五','六'][d.getDay()];
   return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 周'+wd;
 }
-function validPeriodStart(iso){
-  return /^\d{4}-\d{2}-\d{2}$/.test(iso)&&isoShift(iso,0)===iso&&iso<=todayIso();
-}
-function cycleMonthLabel(iso){
-  var d=new Date(iso+'T12:00:00');
-  return (d.getMonth()+1)+'月';
-}
-function cycleDateShort(iso){
-  var d=new Date(iso+'T12:00:00');
-  return (d.getMonth()+1)+'月'+d.getDate()+'日';
-}
 /* ---------- 生理期统计 ---------- */
 function cycleData(mid){ /* 某成员的记录，按日期升序 */
   return D.periods.filter(function(p){return p.member===mid})
@@ -604,6 +540,12 @@ function gapsOf(ascList){ /* 相邻两次的间隔天数 */
   return g;
 }
 function meanNum(a){return a.length?a.reduce(function(s,v){return s+v},0)/a.length:0}
+function sdNum(a){
+  if(a.length<2)return 0;
+  var m=meanNum(a),s=0;
+  a.forEach(function(v){s+=(v-m)*(v-m)});
+  return Math.sqrt(s/a.length);
+}
 function parseBulk(text){ /* 补录解析：每行 日期 + 可选备注 */
   var out=[],bad=0;
   String(text||'').split(/\n+/).forEach(function(ln){
@@ -611,7 +553,7 @@ function parseBulk(text){ /* 补录解析：每行 日期 + 可选备注 */
     var m=s.match(/^(\d{4})[.\-\/年]\s*(\d{1,2})[.\-\/月]\s*(\d{1,2})日?\s*(.*)$/);
     if(!m){bad++;return}
     var iso=m[1]+'-'+String(+m[2]).padStart(2,'0')+'-'+String(+m[3]).padStart(2,'0');
-    if(!validPeriodStart(iso)){bad++;return}
+    if(iso!==isoShift(iso,0)){bad++;return} /* 2024-2-30 这类非法日期 */
     out.push({iso:iso,note:m[4].trim()});
   });
   return {rows:out,bad:bad};
@@ -783,8 +725,14 @@ function renderMeChip(){
    两个应用同在 neomatay.github.io 域下，共用 localStorage，
    猫猫健康的家庭码登录态直接带进来，数据走它自己的 Supabase。
    主题桥接：把「家」的三态主题写进 iframe 的 :root[data-theme]，
-   cat-health 的皮肤（v2.7+）按该属性切换暖色亮/暗。 */
+   cat-health 的皮肤（v2.7+）按该属性切换暖色亮/暗。
+   钥匙桥接（v0.4）：cat_link 表把猫猫健康的家庭 UUID 挂在「家」名下 ——
+   任何一台设备输过一次猫角钥匙（cat_health_family_id）就自动上云，
+   其他设备凭邀请码进家、点开猫角时先取钥匙写入 localStorage 再加载
+   iframe，免二次进门。注意：这意味着邀请码同时解锁猫猫健康数据（有意为之）。 */
 var CAT_URL='https://neomatay.github.io/cat-health/';
+var CAT_KEY='cat_health_family_id'; /* cat-health 的登录钥匙（同域 localStorage 共享） */
+var CATC={uid:null,got:false};      /* 云端桥接值缓存：got=已查过云端 */
 function catLayout(){
   var box=document.getElementById('catFrameBox');
   if(!box)return;
@@ -800,19 +748,57 @@ function catTheme(){
     else delete doc.documentElement.dataset.theme;
   }catch(_){} /* 本地调试时 iframe 跨源，静默跳过 */
 }
+function catLocalUid(){
+  try{return localStorage.getItem(CAT_KEY)||''}catch(_){return ''}
+}
+/* 捕获：本机若持有猫角钥匙而云端没有/不一致，同步上云（一次输入，全家生效） */
+function catPush(){
+  var u=catLocalUid();
+  if(!u||!AUTH)return;
+  if(CATC.got&&CATC.uid===u)return;
+  api('POST','cat_link?on_conflict=family_id&select=',
+    {family_id:AUTH.fid,cat_family_id:u},
+    'resolution=merge-duplicates,return=minimal'
+  ).then(function(){
+    CATC.got=true;CATC.uid=u;
+    toast('猫角钥匙已存进云端，其他设备进家即自动登录');
+  }).catch(function(){}); /* 静默：桥接失败不影响猫角本身 */
+}
+/* 分发：云端有钥匙而本机没有时，先写入 localStorage 再开门（免二次进门） */
+function catPull(done){
+  api('GET','cat_link?select=cat_family_id').then(function(r){
+    CATC.got=true;
+    if(r&&r[0]&&r[0].cat_family_id){
+      CATC.uid=r[0].cat_family_id;
+      if(catLocalUid()!==CATC.uid){
+        try{localStorage.setItem(CAT_KEY,CATC.uid)}catch(_){}
+      }
+    }
+  }).catch(function(){CATC.got=true}) /* 表还没建/网络问题：照常开门（维持旧行为） */
+  .then(done);
+}
+function catBoot(){
+  var f=document.getElementById('catFrame');
+  if(!f||f.dataset.loaded)return;
+  f.dataset.loaded='1';
+  f.addEventListener('load',function(){
+    var l=document.getElementById('catLoad');
+    if(l)l.style.display='none';
+    catTheme();
+    catPush(); /* 用户可能刚在 iframe 里输过猫角钥匙，捕获上云 */
+  });
+  f.src=CAT_URL; /* 只加载一次，之后常驻（切走只是隐藏，状态不丢） */
+}
 function renderCat(){
   var f=document.getElementById('catFrame');
   if(!f)return;
+  catLayout();
   if(!f.dataset.booted){
     f.dataset.booted='1';
-    f.addEventListener('load',function(){
-      var l=document.getElementById('catLoad');
-      if(l)l.style.display='none';
-      catTheme();
-    });
-    f.src=CAT_URL; /* 只在第一次进猫角时加载，之后常驻（切走只是隐藏，状态不丢） */
+    catPull(catBoot); /* 先取云端钥匙再开门；60s 轮询重渲染不会重复加载 */
+    return;
   }
-  catLayout();
+  catPush(); /* 常驻后再进猫角：顺便捕获本机新输的钥匙（iframe 内登录不触发 load） */
 }
 window.addEventListener('resize',catLayout);
 
@@ -960,66 +946,48 @@ function renderCycle(){
   tb.innerHTML=D.members.map(function(m){
     return '<button data-act="ptab" data-mid="'+m.id+'" class="'+(m.id===UI.ptab?'on':'')+'">'+avHtml(m,20)+esc(m.name)+'</button>';
   }).join('');
-  var me=member(UI.ptab),list=cycleData(UI.ptab),body=document.getElementById('cycleBody');
+  var me=member(UI.ptab);
+  var list=cycleData(UI.ptab); /* 升序 */
+  var body=document.getElementById('cycleBody');
   if(!list.length){
-    body.innerHTML='<div class="empty cycle-empty">'+esc(me?me.name:'')+'还没有记录<br>先记下最近一次来的日期，之后这里会自动算间隔和波动。<div class="sh-actions"><button class="btn" data-act="periodNew">记下第一次</button></div></div>';
+    body.innerHTML='<div class="empty">'+esc(me?me.name:'')+'还没有记录<br>点右上「记一笔」；过去几年的用「批量导入」一次搬进来</div>';
     return;
   }
-  var n=list.length,last=list[n-1],lastDay=dayDiff(last.date,todayIso());
-  var gs=gapsOf(list),recentStart=Math.max(0,gs.length-8),recent=gs.slice(recentStart);
-  var mean=meanNum(recent),latestGap=n>1?gs[gs.length-1]:null;
-  var spread=recent.length?Math.max.apply(null,recent)-Math.min.apply(null,recent):0;
-  var next=recent.length>=3&&spread<=10?isoShift(last.date,Math.round(mean)):null,due=next?dayDiff(todayIso(),next):null;
-  var variation=recent.length?(Math.min.apply(null,recent)+'–'+Math.max.apply(null,recent)):'—';
-  var stateText=lastDay<0?'日期在未来':'距这次开始 '+lastDay+' 天';
-  var html='<section class="card cycle-overview">'+
-    '<div class="eyebrow">'+esc(me?me.name:'')+' · '+last.date.slice(0,4)+' 年最近一次</div>'+
-    '<div class="cycle-primary"><h2>'+cycleDateShort(last.date)+'<small>开始</small></h2><span class="cycle-state"><span class="d mut"></span>'+stateText+'</span></div>'+
-    '<div class="cycle-metrics">'+
-      '<div class="cycle-metric"><span>本次距上次</span><b>'+(latestGap!=null?latestGap:'—')+(latestGap!=null?'<em>天</em>':'')+'</b></div>'+
-      '<div class="cycle-metric"><span>近 '+recent.length+' 次平均</span><b>'+(n>1?Math.round(mean):'—')+(n>1?'<em>天</em>':'')+'</b></div>'+
-      '<div class="cycle-metric"><span>间隔范围</span><b class="'+(gs.length?'':'muted')+'">'+variation+(gs.length?'<em>天</em>':'')+'</b></div>'+
-    '</div>';
-  if(next){
-    html+='<div class="cycle-due"><span>按近 '+recent.length+' 次间隔推算，仅供参考</span><b class="'+(due<0?'late':'')+'">'+dateLabel(next)+' · '+(due>0?'还有 '+due+' 天':due===0?'就是今天':'已过 '+(-due)+' 天')+'</b></div>';
-  }else{
-    html+='<div class="cycle-due"><span>'+(n===1?'再记 1 次，就能看到第一次间隔':recent.length<3?'再积累几次，才显示下次日期参考':'近期跨度 '+spread+' 天，不显示单日预测')+'</span><b>继续记录</b></div>';
-  }
-  html+='</section>';
-  var firstYear=parseInt(list[0].date.slice(0,4),10),lastYear=Math.max(parseInt(todayIso().slice(0,4),10),parseInt(last.date.slice(0,4),10));
-  if(UI.cycleYear==null||UI.cycleYear<firstYear||UI.cycleYear>lastYear)UI.cycleYear=parseInt(last.date.slice(0,4),10);
-  var monthDays=[];
-  for(var m=0;m<12;m++)monthDays.push([]);
-  list.forEach(function(p){
-    if(parseInt(p.date.slice(0,4),10)===UI.cycleYear)monthDays[parseInt(p.date.slice(5,7),10)-1].push(parseInt(p.date.slice(8,10),10));
-  });
-  html+='<section class="card cycle-year"><div class="cycle-section-head"><div><h3>每月哪天来的</h3><p>实际记录的开始日</p></div><div class="cycle-year-nav"><button type="button" data-act="cycleYearPrev" aria-label="上一年" '+(UI.cycleYear<=firstYear?'disabled':'')+'>‹</button><strong>'+UI.cycleYear+' 年</strong><button type="button" data-act="cycleYearNext" aria-label="下一年" '+(UI.cycleYear>=lastYear?'disabled':'')+'>›</button></div></div><div class="month-grid">';
-  monthDays.forEach(function(days,idx){
-    html+='<div class="month-cell'+(days.length?' filled':'')+'"><span>'+(idx+1)+' 月</span><strong>'+(days.length?days.join('、')+' 日':'—')+'</strong></div>';
-  });
-  html+='</div></section>';
+  var n=list.length;
+  var html='';
+  /* 统计卡 */
+  var last=list[n-1];
+  html+='<div class="card"><div class="cstat">'+
+    '<div class="it">记录<b>'+n+'<em> 次</em></b></div>'+
+    '<div class="it">最近一次<b>'+dateLabel(last.date)+'</b></div>';
   if(n>1){
-    var barMax=Math.max(38,Math.max.apply(null,recent));
-    html+='<section class="card cycle-trend"><div class="cycle-section-head"><div><h3>周期间隔波动</h3><p>'+list[recentStart+1].date.slice(0,7).replace('-','.')+'—'+last.date.slice(0,7).replace('-','.')+' · 两次开始日之间的天数</p></div><span class="cycle-average">平均 <b>'+Math.round(mean)+' 天</b></span></div><div class="bar-chart">';
-    recent.forEach(function(g,idx){
-      var listIndex=recentStart+idx+1,h=Math.max(8,Math.round(g/barMax*100));
-      html+='<div class="bar-col'+(listIndex===n-1?' latest':'')+'" role="img" aria-label="'+fullDateLabel(list[listIndex].date)+'：距上次 '+g+' 天"><span class="bar-value">'+g+'</span><div class="bar-track"><i style="height:'+h+'%"></i></div><small>'+cycleMonthLabel(list[listIndex].date)+'</small></div>';
-    });
-    html+='</div><div class="cycle-axis"><i></i><span>橙色为最近一次 · 纵向 0–'+barMax+' 天</span></div></section>';
-  }else{
-    html+='<section class="card cycle-trend"><div class="cycle-section-head"><div><h3>周期间隔波动</h3><p>记录至少两次，才会出现趋势</p></div></div><div class="empty" style="padding:18px 12px">先记下一次，看看两次开始日相隔多少天。</div></section>';
-  }
-  var shown=UI.cycleHistory?list:list.slice(Math.max(0,n-4)),hidden=n-shown.length;
-  html+='<section class="cycle-history"><button class="cycle-history-toggle '+(UI.cycleHistory?'open':'')+'" data-act="cycleHistory" aria-expanded="'+(UI.cycleHistory?'true':'false')+'"><span>历史记录 <small>'+n+' 次 · 每月开始日和相邻间隔</small></span><span class="chevron">⌄</span></button><div class="cycle-history-list">';
-  var historyYear=null;
-  for(var i=shown.length-1;i>=0;i--){
-    var p=shown[i],originalIndex=list.indexOf(p),gap=originalIndex>=1?dayDiff(list[originalIndex-1].date,p.date):null;
-    if(p.date.slice(0,4)!==historyYear){historyYear=p.date.slice(0,4);html+='<div class="history-year">'+historyYear+' 年</div>'}
-    html+='<button class="history-row" type="button" data-act="periodEdit" data-id="'+p.id+'" aria-label="编辑 '+fullDateLabel(p.date)+'"><span class="history-dot"></span><span class="history-date"><strong>'+p.date.replace(/-/g,'.')+'</strong><small>'+fullDateLabel(p.date).split(' ')[1]+(p.note?' · '+esc(p.note):'')+'</small></span><span class="history-gap">'+(gap!=null?'<b>'+gap+'</b><small>天间隔</small>':'<small>最早一条</small>')+'</span><span class="history-edit">编辑</span></button>';
+    var gs=gapsOf(list),mean=meanNum(gs),sd=sdNum(gs);
+    var next=isoShift(last.date,Math.round(mean));
+    var due=dayDiff(todayIso(),next);
+    html+='<div class="it">平均周期<b>'+Math.round(mean)+'<em> 天</em></b></div>'+
+      '<div class="it">间隔波动<b>±'+(Math.round(sd*10)/10)+'<em> 天</em></b></div>'+
+      '<div class="it">规律<b><span class="stab'+(sd<=4?' ok':' warn')+'">'+(sd<=2?'稳定':sd<=4?'较稳':'波动大')+'</span></b></div>'+
+      '<div class="it">预计下次<b>'+dateLabel(next)+'<em> · '+(due>0?'还有 '+due+' 天':due===0?'就是今天':'已过 '+(-due)+' 天')+'</em></b></div>';
   }
   html+='</div>';
-  if(hidden>0)html+='<button class="cycle-more" data-act="cycleHistory">展开其余 '+hidden+' 次记录</button>';
-  html+='</section>';
+  if(n<3)html+='<div class="hint">记满 3 次，就能看周期稳不稳了</div>';
+  html+='</div>';
+  /* 记录列表（新的在上） */
+  for(var i=n-1;i>=0;i--){
+    var p=list[i];
+    var gap=i>=1?dayDiff(list[i-1].date,p.date):null;
+    var dd=dayDiff(p.date,todayIso());
+    var active=dd>=0&&dd<6;
+    var sub=[];
+    if(active)sub.push('<span class="now">第 '+(dd+1)+' 天</span>');
+    sub.push(gap!=null?('间隔 '+gap+' 天'):'最早一条');
+    if(p.note)sub.push(esc(p.note));
+    html+='<div class="prow" data-act="periodEdit" data-id="'+p.id+'" role="button" tabindex="0" aria-label="编辑这条记录">'+
+      (active?'<span class="d pulse"></span>':'<span class="d mut"></span>')+
+      '<div class="pdate">'+fullDateLabel(p.date)+'<span class="sub">'+sub.join(' · ')+'</span></div>'+
+      '<span class="x">编辑</span>'+
+    '</div>';
+  }
   body.innerHTML=html;
 }
 
@@ -1162,7 +1130,7 @@ function periodCheckExisting(){ /* 记一笔：所选人+日期已有记录时�
     note.value=hit.note||'';
   }else{
     hint.classList.remove('dup');
-    hint.innerHTML='记开始那天就行；周期间隔和趋势会自动算。';
+    hint.innerHTML='记开始那天就行；周期和稳定性会自动算。';
     note.value='';
   }
 }
@@ -1170,10 +1138,10 @@ function periodSheet(){
   openSheet(shHead('记一笔 · 生理期')+
     '<div class="flabel">谁的</div>'+whoChips('pWho')+
     '<div class="flabel">哪天来的</div>'+
-    '<input class="finput" id="pDate" type="date" value="'+todayIso()+'" max="'+todayIso()+'" style="max-width:180px">'+
+    '<input class="finput" id="pDate" type="date" value="'+todayIso()+'" style="max-width:180px">'+
     '<div class="flabel">备注（可不填）</div>'+
     '<input class="finput" id="pNote" placeholder="比如：量少 / 肚子疼">'+
-    '<div class="hint" id="pDup">记开始那天就行；周期间隔和趋势会自动算。</div>'+
+    '<div class="hint" id="pDup">记开始那天就行；周期和稳定性会自动算。</div>'+
     '<div class="sh-actions"><button class="btn" data-act="periodSave">记下</button></div>'
   );
   document.getElementById('pDate').addEventListener('change',periodCheckExisting);
@@ -1183,7 +1151,7 @@ function periodEditSheet(p){
   openSheet(shHead('编辑这条记录')+
     '<div class="flabel">谁的</div>'+whoChips('pWho')+
     '<div class="flabel">哪天来的</div>'+
-    '<input class="finput" id="pDate" type="date" value="'+p.date+'" max="'+todayIso()+'" style="max-width:180px">'+
+    '<input class="finput" id="pDate" type="date" value="'+p.date+'" style="max-width:180px">'+
     '<div class="flabel">备注（可不填）</div>'+
     '<input class="finput" id="pNote" value="'+esc(p.note||'')+'" placeholder="比如：量少 / 肚子疼">'+
     '<div class="hint">改了日期或换成另一个人，保存后这条会挪过去；如果那天已经有记录，两条会合成一条。点空白处或 ✕ 都是不改直接退出。</div>'+
@@ -1404,19 +1372,13 @@ document.addEventListener('click',function(e){
 
     /* 卧室 · 生理期 */
     case 'ptab':
-      UI.ptab=parseInt(el.dataset.mid,10);UI.cycleYear=null;UI.cycleHistory=false;render();break;
-    case 'cycleYearPrev':
-      UI.cycleYear--;render();break;
-    case 'cycleYearNext':
-      UI.cycleYear++;render();break;
-    case 'cycleHistory':
-      UI.cycleHistory=!UI.cycleHistory;render();break;
+      UI.ptab=parseInt(el.dataset.mid,10);render();break;
     case 'periodNew':periodSheet();break;
     case 'periodSave':{
       var who=document.querySelector('#pWho .on');
       var pmid=who?parseInt(who.dataset.mid,10):UI.ptab;
       var pdate=document.getElementById('pDate').value;
-      if(!validPeriodStart(pdate)){toast('选一个真实的、已经到来的日期');return}
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(pdate)){toast('选一下日期');return}
       var pnote=document.getElementById('pNote').value.trim();
       UI.ptab=pmid;
       var wasDup=!!periodFind(pmid,pdate);
@@ -1438,7 +1400,7 @@ document.addEventListener('click',function(e){
       var who3=document.querySelector('#pWho .on');
       var emid=who3?parseInt(who3.dataset.mid,10):p0.member;
       var edate=document.getElementById('pDate').value;
-      if(!validPeriodStart(edate)){toast('选一个真实的、已经到来的日期');return}
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(edate)){toast('选一下日期');return}
       var enote=document.getElementById('pNote').value.trim();
       UI.ptab=emid;
       /* upsert 到新位置；改了人/日期时把旧的那条删掉（挪动） */
