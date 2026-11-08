@@ -4,7 +4,7 @@
 
 ## 项目是什么
 
-两个人的家（和三只猫）的家庭协作应用：**手机网页，首页是一栋可点击的矢量剖面小房子（room tour），点房间进功能**。v0.1–v0.3 已点亮：厨房（家庭餐厅：上架菜/预定/接单）、冰箱与库存、购物清单（玄关）、卧室（生理期记录：每月开始日/相邻间隔/近期波动）、猫角（猫猫管家，嵌入 cat-health）。书房（账本）在二期池。
+两个人的家（和三只猫）的家庭协作应用：**手机网页，首页是一栋可点击的矢量剖面小房子（room tour），点房间进功能**。v0.1–v0.3 已点亮：厨房（家庭餐厅：上架菜/预定/接单）、冰箱与库存、购物清单（玄关）、卧室（生理期记录：日期/周期稳定性/预计下次）、猫角（猫猫管家，嵌入 cat-health）。书房（账本）在二期池。
 
 - 线上：https://neomatay.github.io/family-home/
 - 仓库：https://github.com/neomatay/family-home
@@ -25,7 +25,7 @@ index.html
 ├── <svg> 矢量小家（交互层：.hot 热区 + 状态圆点）
 ├── 视图 section（#v-join 进门 / #v-home / #v-kitchen / #v-fridge / #v-list / #v-cycle）
 └── <script>（AUTH/D/UI 状态 + api() REST 层 + render + 事件）
-supabase/migration.sql  七张表 + RLS + 校验函数（v0.2 段之后是追加段）
+supabase/migration.sql  八张表 + RLS + 校验函数（v0.2 段之后是追加段）
 docs/PRD-v0.1.md        产品定义
 ```
 
@@ -64,6 +64,7 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 猫角**不是本仓库实现的功能**：它是一个同源 iframe，加载 `https://neomatay.github.io/cat-health/`（独立仓库 neomatay/cat-health，Vue3 + ECharts + supabase-js，数据在它**自己的** Supabase 项目 pvprdtfkqqxkwxvstzuo，家庭 UUID 即口令；另有 iOS 原生 App 共用该库）。
 
 - **两个应用同域**（neomatay.github.io），共用 localStorage —— `cat_health_family_id` 登录态直接带进 iframe，无需二次进门。
+- **钥匙桥接（v0.4，第 8 张表 `cat_link`）**：把猫猫健康的家庭 UUID 存进「家」的云端，`catPull()` 进猫角先取钥匙写 localStorage 再加载 iframe（自动分发）；`catPush()` 本机持有钥匙时 upsert 上云（自动捕获，`on_conflict=family_id` + merge-duplicates）。**⚠️ 安全边界：桥接后邀请码同时解锁猫猫健康数据 —— 用户知情并拍板过的决策，别"修"它。** 桥接所有请求静默失败（不 toast 不阻塞），表未建/网络问题都退回「手动进门」旧行为。
 - **代码不搬**：cat-health 的功能永远不移植进本仓库单文件（会破坏零依赖纪律）；本仓库也不碰它的数据层。
 - **iframe 常驻**：`renderCat()` 用 `dataset.booted` 保证只加载一次，切走视图只是隐藏，猫猫健康的滚动/弹层状态不丢。
 - **主题桥接**：`catTheme()` 把「家」的三态主题写进 iframe 的 `documentElement.dataset.theme`（无值=跟随系统）；cat-health 侧 v2.7+ 的皮肤已按同一套暖色 token 对齐（见其 style.css 头注）。跨源（本地调试）时 try/catch 静默跳过。
