@@ -143,3 +143,26 @@ create index on public.periods (family_id);
 -- 家庭删除：凭码可删自己的家（级联清空子表）—— 也用于清理冒烟测试残留
 create policy "family delete" on public.families for delete
   using (id = public.current_family_id());
+
+-- ============================================================
+-- v0.4 猫角桥接（2026-11-08）
+-- cat_link：把猫猫健康的家庭 UUID 挂在「家」名下，实现
+-- 「全家凭邀请码进家 → 猫角 iframe 自动登录」。
+-- 前端逻辑（index.html 猫角块）：进猫角先 GET 本表取钥匙写入
+-- localStorage（同域 iframe 共享）再加载；本机若已持有钥匙则
+-- POST upsert 上云。写入用 upsert —— POST cat_link?on_conflict=family_id
+-- 并带 Prefer: resolution=merge-duplicates,return=minimal。
+-- ⚠️ 知情决策：cat_health_family_id 是 cat-health 的唯一口令，
+-- 入库后邀请码即同时解锁猫猫健康数据（一把钥匙开全家，有意为之）。
+-- ============================================================
+
+create table public.cat_link (
+  family_id     uuid primary key references public.families(id) on delete cascade,
+  cat_family_id text not null,
+  updated_at    timestamptz not null default now()
+);
+
+alter table public.cat_link enable row level security;
+create policy "cat_link all" on public.cat_link for all
+  using (family_id = public.current_family_id())
+  with check (family_id = public.current_family_id());
