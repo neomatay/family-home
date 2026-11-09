@@ -4,7 +4,7 @@
 
 ## 项目是什么
 
-两个人的家（和三只猫）的家庭协作应用：**手机网页，首页是一栋可点击的矢量剖面小房子（room tour），点房间进功能**。v0.1–v0.5 已点亮：厨房（家庭餐厅：上架菜/预定/接单）、冰箱与库存、购物清单（玄关）、卧室（生理期记录：日期/周期稳定性/预计下次）、猫角（猫猫管家，嵌入 cat-health）、书房（周末新鲜事：记想做的事/定日子/做完打回味）。**整栋小家已无灰房间**；账本退回二期池（书房的位置让给了新鲜事）。
+两个人的家（和三只猫）的家庭协作应用：**手机网页，首页是一栋可点击的矢量剖面小房子（room tour），点房间进功能**。v0.1–v0.5 已点亮：厨房（家庭餐厅：上架菜/预定/接单）、冰箱与库存、购物清单（玄关）、卧室（生理期记录：每月开始日格子/间隔趋势/折叠历史）、猫角（猫猫管家，嵌入 cat-health）、书房（周末新鲜事：记想做的事/定日子/做完打回味）。**整栋小家已无灰房间**；账本退回二期池（书房的位置让给了新鲜事）。
 
 - 线上：https://neomatay.github.io/family-home/
 - 仓库：https://github.com/neomatay/family-home
@@ -14,6 +14,7 @@
 
 - **单文件 `index.html`**（~1200 行），无构建、无依赖、无框架。这是产品决策：先以最直接的手机网页形式落地，未来可平移微信小程序/App。加构建工具链之前先和维护者讨论。
 - 字体走 Google Fonts（Noto Sans SC + ZCOOL XiaoWei），其余全内联。
+- 图标是仓库根目录的三个静态文件（`icon.svg` / `favicon.png` / `apple-touch-icon.png`），`<link>` 在 index.html 头部 —— 静态资产，不算"依赖"。改图标三份一起换（SVG 是矢量源，PNG 由脚本光栅化，色值取自首页小家的 SVG token）。
 - JS 是 ES5 风格（`var` / `function` / 字符串拼 HTML）——**保持风格一致**，不要局部引入 ES Module / JSX。
 - 渲染：状态 → `render()` 全量重画（数据量小，够用）。事件用委托：`[data-act]` / `[data-nav]`。**`el.dataset.*` 拿到的永远是字符串**——与数字 id 比对前必须 `parseInt`（曾因 `2==="2"` 让「编辑菜品」打开永远是空白新建态）。
 
@@ -113,6 +114,16 @@ gh api --method PUT repos/neomatay/family-home/contents/index.html \
 ```
 
 Pages 从 main 自动发布。⚠️ 本地 git 历史与远端不同源（API 上传造成的），网络恢复后先 `git fetch` 对齐，**不要强推**。
+
+### ⚠️ 部署前必须先查远端（2026-11-09 踩过的坑）
+
+远端**会收到本仓库之外的直接编辑**（维护者用 GitHub 网页编辑器或其他工具改过 index.html）。Contents API PUT 是整文件无脑覆盖 —— 本地没有的远端改动会被静默吃掉。曾因此把生理期月视图（远端 a6dfd47）覆盖丢失，靠 git blob 才抢救回来。**每次部署前：**
+
+```bash
+gh api "repos/neomatay/family-home/commits?per_page=10" --jq '.[].sha[0:7]'   # 有不认识的提交？
+gh api repos/neomatay/family-home/contents/index.html --jq .content | base64 -d | diff - index.html
+```
+有远端独有改动 → 先移植进本地再部署。更新已存在的文件必须 GET 完整 40 位 blob sha 再 PUT（短 sha 会 409）。
 
 ## 二期池（优先级从高到低）
 
