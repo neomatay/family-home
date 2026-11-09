@@ -166,3 +166,43 @@ alter table public.cat_link enable row level security;
 create policy "cat_link all" on public.cat_link for all
   using (family_id = public.current_family_id())
   with check (family_id = public.current_family_id());
+
+-- ============================================================
+-- v0.5 书房：周末新鲜事（2026-11-09）
+-- weekend_events：两个人的周末手账 —— 记下想干的事、定日子、
+-- 做完打个回味，攒够数据书房长出「回顾」（频次 × 回味分析）。
+-- 前端逻辑（index.html 书房块）：
+--   status   'idea' 想做（event_date 为空，泡在想做池）
+--            'plan' 定了（有日子）
+--            'done' 做了（rating 可打：1 不值 / 2 一般 / 3 值得）
+--            'skip' 没去成
+--   kind     固定枚举（前端 KINDS 12 项 + other），具体内容在
+--            title —— kind 收敛成有限集是「回顾」能做分析的前提
+--   time_seg 上午/下午/晚上/全天（可空）
+--   member_id 谁提的（可空，为分析预埋）
+-- 普通写操作（insert / patch / delete），无唯一约束，不需要 upsert。
+-- ============================================================
+
+create table public.weekend_events (
+  id          bigint generated always as identity primary key,
+  family_id   uuid not null references public.families(id) on delete cascade,
+  title       text not null,
+  kind        text not null default 'other',
+  event_date  date,
+  time_seg    text,
+  status      text not null default 'idea' check (status in ('idea','plan','done','skip')),
+  rating      int check (rating between 1 and 3),
+  member_id   bigint references public.members(id) on delete set null,
+  note        text not null default '',
+  created_by  bigint,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.weekend_events enable row level security;
+create policy "weekend_event all" on public.weekend_events for all
+  using (family_id = public.current_family_id())
+  with check (family_id = public.current_family_id());
+
+create index on public.weekend_events (family_id);
+create index on public.weekend_events (family_id, event_date);
