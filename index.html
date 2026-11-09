@@ -181,6 +181,15 @@ svg text{user-select:none}
 .prow .x{display:inline-flex;align-items:center;height:26px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ink2);font-size:12px;cursor:pointer;flex:none;line-height:1}
 .hint.dup{color:var(--dot-on)}
 
+/* 书房 · 周末新鲜事 */
+.kchips{display:flex;flex-wrap:wrap;gap:6px}
+.kchips button{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:12.5px;cursor:pointer}
+.kchips button.on{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.evacts{display:flex;gap:6px;flex:none;align-items:center}
+.evacts .btn{padding:4px 11px;font-size:11.5px;border-radius:8px}
+.evtag{font-size:11px;flex:none;color:var(--ink2);line-height:1.5;text-align:right}
+.evtag .did{color:var(--accent);font-weight:500}
+
 /* 进门（引导） */
 #v-join{padding-top:9vh}
 .join-title{font-size:32px;text-align:center;margin:4px 0 10px}
@@ -314,17 +323,26 @@ svg text{user-select:none}
         <rect x="157" y="264" width="16" height="3" rx="1.5" fill="var(--h-frline)"/>
         <rect x="134" y="252" width="22" height="26" rx="3" fill="var(--h-wood)"/>
         <circle cx="145" cy="248" r="5" fill="var(--warm)"/>
-        <g class="dim">
-          <rect x="220" y="250" width="74" height="7" rx="2" fill="#8E857A"/>
-          <rect x="224" y="257" width="5" height="21" fill="#8E857A"/>
-          <rect x="285" y="257" width="5" height="21" fill="#8E857A"/>
-          <rect x="240" y="238" width="2" height="12" fill="#8E857A"/>
-          <path d="M234 238h14l-7-8z" fill="#8E857A"/>
-          <rect x="292" y="192" width="28" height="66" rx="3" fill="#8E857A"/>
-          <path d="M292 214h28M292 236h28" stroke="var(--surface)" stroke-width="2"/>
-        </g>
-        <rect x="212" y="206" width="88" height="20" rx="10" fill="var(--surface)" stroke="var(--line)"/>
-        <text x="256" y="220" text-anchor="middle" font-size="9.5" fill="var(--ink2)">还没有整理好</text>
+        <!-- 书房（v0.5 点亮）：书桌 · 台灯 · 摊开的小本子 · 书架 -->
+        <circle cx="241" cy="233" r="12" fill="var(--h-glow)"/>
+        <rect x="292" y="192" width="28" height="66" rx="3" fill="var(--h-wood)"/>
+        <path d="M292 214h28M292 236h28" stroke="var(--surface)" stroke-width="2"/>
+        <rect x="296" y="196" width="4" height="14" rx="1" fill="var(--h-roof)"/>
+        <rect x="302" y="199" width="4" height="11" rx="1" fill="var(--h-bed)"/>
+        <rect x="308" y="196" width="4" height="14" rx="1" fill="var(--h-cat1)"/>
+        <rect x="313" y="200" width="4" height="10" rx="1" fill="var(--h-window)"/>
+        <rect x="296" y="219" width="4" height="12" rx="1" fill="var(--h-bed)"/>
+        <rect x="302" y="221" width="4" height="10" rx="1" fill="var(--h-roof)"/>
+        <rect x="308" y="219" width="4" height="12" rx="1" fill="var(--h-cat2)"/>
+        <rect x="296" y="241" width="4" height="11" rx="1" fill="var(--h-window)"/>
+        <rect x="303" y="239" width="4" height="13" rx="1" fill="var(--h-cat1)"/>
+        <rect x="220" y="250" width="74" height="7" rx="2" fill="var(--h-wood)"/>
+        <rect x="224" y="257" width="5" height="21" fill="var(--h-wood)"/>
+        <rect x="285" y="257" width="5" height="21" fill="var(--h-wood)"/>
+        <rect x="240" y="238" width="2" height="12" fill="var(--h-wood)"/>
+        <path d="M234 238h14l-7-8z" fill="var(--h-cat1)"/>
+        <rect x="252" y="245" width="13" height="5" rx="1" fill="var(--h-cat3)"/>
+        <path d="M258 245v5M252 248h13" stroke="var(--h-wood)" stroke-width="0.8"/>
         <rect x="18" y="280" width="324" height="12" fill="var(--h-slab)"/>
         <!-- 一层 -->
         <rect x="30" y="292" width="160" height="120" fill="var(--h-wall)"/>
@@ -388,9 +406,10 @@ svg text{user-select:none}
         </g>
         <circle id="dotCat" cx="248" cy="324.5" r="3.5" fill="var(--dot-on)" style="animation:dotp 2.2s ease-in-out infinite"/>
         <circle id="dotBed" cx="70" cy="178" r="3.5" fill="var(--dot-mut)"/>
+        <circle id="dotStudy" cx="240" cy="178" r="3.5" fill="var(--dot-on)" style="animation:dotp 2.2s ease-in-out infinite;display:none"/>
         <!-- 热区 -->
         <rect class="hot" data-nav="cycle" x="30" y="158" width="165" height="122" rx="10" tabindex="0" aria-label="卧室 · 生理期"/>
-        <rect class="hot" data-nav="soon" data-room="study" x="203" y="158" width="127" height="122" rx="10" tabindex="0" aria-label="书房"/>
+        <rect class="hot" data-nav="study" x="203" y="158" width="127" height="122" rx="10" tabindex="0" aria-label="书房 · 周末新鲜事"/>
         <rect class="hot" data-nav="kitchen" x="30" y="292" width="160" height="120" rx="10" tabindex="0" aria-label="厨房"/>
         <rect class="hot" data-nav="fridge" x="148" y="288" width="40" height="124" rx="10" tabindex="0" aria-label="冰箱"/>
         <rect class="hot" data-nav="cat" x="198" y="292" width="62" height="120" rx="10" tabindex="0" aria-label="猫角 · 猫猫管家"/>
@@ -445,6 +464,15 @@ svg text{user-select:none}
     <div class="stack" id="cycleBody"></div>
   </section>
 
+  <!-- ============ 书房 · 周末新鲜事 ============ -->
+  <section class="view" id="v-study">
+    <div class="vhead">
+      <div><div class="vt">周末新鲜事</div><div class="vs">书房 · 记下想干的 · 定日子 · 做完打个回味</div></div>
+      <button class="btn small" data-act="eventNew">记一笔</button>
+    </div>
+    <div class="stack" id="studyBody"></div>
+  </section>
+
   <!-- ============ 猫角 · 猫猫管家（同源 iframe 嵌入 cat-health） ============ -->
   <section class="view" id="v-cat">
     <div class="vhead">
@@ -472,7 +500,7 @@ var SUPA_KEY='sb_publishable_sEnTySyQHRHFJ71tWCoekg_Vvoy8ctM';
 
 /* ---------- 状态 ---------- */
 var AUTH=null;   /* {fid, code, me} 家庭口令，存本机 */
-var D={members:[],dishes:[],inv:[],res:[],shop:[],periods:[],familyName:''};
+var D={members:[],dishes:[],inv:[],res:[],shop:[],periods:[],events:[],familyName:''};
 var UI={view:'join',ktab:'menu',ptab:null};
 var busy=false;  /* 同步中 */
 
@@ -487,7 +515,7 @@ function persistAuth(){try{localStorage.setItem('jia-auth-v2',JSON.stringify(AUT
 function persistCache(){try{localStorage.setItem('jia-cache-v2',JSON.stringify(D))}catch(_){}}
 
 try{AUTH=JSON.parse(localStorage.getItem('jia-auth-v2'))||null}catch(_){AUTH=null}
-try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members)D=_c}catch(_){}
+try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members){D=_c;D.events=D.events||[]}}catch(_){}
 
 function isoAdd(days){
   var d=new Date();d.setDate(d.getDate()+days);
@@ -559,6 +587,44 @@ function parseBulk(text){ /* 补录解析：每行 日期 + 可选备注 */
   return {rows:out,bad:bad};
 }
 
+/* ---------- 书房 · 周末新鲜事 ---------- */
+var KINDS=[
+  ['out','户外'],['expo','展览'],['film','电影追剧'],['food','探店'],['show','演出'],
+  ['diy','手作'],['sport','运动'],['game','桌游'],['home','在家'],['trip','短途'],
+  ['cat','猫事'],['other','其他']
+];
+/* kind 是固定枚举（将来「回顾」的频次/回味分析靠它收敛分组），具体内容写在 title */
+function kindLabel(k){for(var i=0;i<KINDS.length;i++)if(KINDS[i][0]===k)return KINDS[i][1];return '其他'}
+var SEGS=['上午','下午','晚上','全天'];
+function evById(id){id=parseInt(id,10);for(var i=0;i<D.events.length;i++)if(D.events[i].id===id)return D.events[i];return null}
+function ratingLabel(r){return r===3?'值得':r===2?'一般':r===1?'不值':''}
+/* 眼前的周末：周六日当天 = 正在过的这个；周一到周五 = 即将到来的那个 */
+function thisWeekend(){
+  var wd=new Date().getDay();
+  if(wd===6)return {sat:todayIso(),sun:isoAdd(1)};
+  if(wd===0)return {sat:isoAdd(-1),sun:todayIso()};
+  return {sat:isoAdd(6-wd),sun:isoAdd(7-wd)};
+}
+/* 任意日期归属的周末（周六开头，工作日归上一个周六）—— 往事分组用 */
+function weekendOf(iso){
+  var off=[-1,-2,-3,-4,-5,-6,0][new Date(iso+'T12:00:00').getDay()];
+  var sat=isoShift(iso,off);
+  return {sat:sat,sun:isoShift(sat,1)};
+}
+function wdLabel(iso){
+  return '周'+['日','一','二','三','四','五','六'][new Date(iso+'T12:00:00').getDay()];
+}
+function weekendLabel(w){
+  var a=new Date(w.sat+'T12:00:00'),b=new Date(w.sun+'T12:00:00');
+  return (a.getMonth()+1)+'月'+a.getDate()+'–'+((a.getMonth()===b.getMonth())?b.getDate():((b.getMonth()+1)+'月'+b.getDate()))+'日';
+}
+function evDateLabel(iso){
+  if(iso===todayIso())return '今天';
+  if(iso===isoAdd(1))return '明天';
+  var d=new Date(iso+'T12:00:00');
+  return (d.getMonth()+1)+'月'+d.getDate()+'日 '+wdLabel(iso);
+}
+
 /* ---------- Supabase REST ---------- */
 function api(method,path,body,prefer){
   var h={
@@ -580,7 +646,7 @@ function api(method,path,body,prefer){
   });
 }
 
-/* 同步：拉全量（7 张表并行），存缓存并重渲染 */
+/* 同步：拉全量（8 张表并行），存缓存并重渲染 */
 function sync(initial){
   if(!AUTH||busy)return Promise.resolve();
   busy=true;
@@ -592,7 +658,9 @@ function sync(initial){
     api('GET','reservations?select=*&order=date.asc,time.asc'),
     api('GET','shopping?select=*&order=id.asc'),
     /* periods 表若尚未建（v0.3 SQL 未跑），容错为空，不影响其他功能 */
-    api('GET','periods?select=*&order=start_date.desc').catch(function(){return null})
+    api('GET','periods?select=*&order=start_date.desc').catch(function(){return null}),
+    /* weekend_events 表若尚未建（v0.5 SQL 未跑），同样容错为空 */
+    api('GET','weekend_events?select=*&order=created_at.desc').catch(function(){return null})
   ]).then(function(rs){
     if(!rs[0].length){ /* 邀请码失效/家被删 */
       logout();toast('邀请码失效了，重新进门吧');busy=false;return;
@@ -607,6 +675,7 @@ function sync(initial){
     D.res=rs[4].map(function(r){return {id:r.id,dishId:r.dish_id,date:r.date,time:r.time,cook:r.cook_id}});
     D.shop=rs[5];
     D.periods=(rs[6]||[]).map(function(p){return {id:p.id,member:p.member_id,date:p.start_date,note:p.note||''}});
+    D.events=(rs[7]||[]).map(function(e){return {id:e.id,title:e.title,kind:e.kind,date:e.event_date||'',seg:e.time_seg||'',status:e.status,rating:e.rating,member:e.member_id,note:e.note||''}});
     persistCache();
     if(UI.view!=='join')render();
   }).catch(function(e){
@@ -693,9 +762,9 @@ function openRes(){
 }
 
 /* ---------- 渲染 ---------- */
-var TITLES={join:'家',home:'家',kitchen:'厨房 · 家庭餐厅',fridge:'冰箱与库存',list:'购物清单',cycle:'卧室 · 生理期',cat:'猫角 · 猫猫管家'};
+var TITLES={join:'家',home:'家',kitchen:'厨房 · 家庭餐厅',fridge:'冰箱与库存',list:'购物清单',cycle:'卧室 · 生理期',study:'书房 · 周末新鲜事',cat:'猫角 · 猫猫管家'};
 function render(){
-  ['join','home','kitchen','fridge','list','cycle','cat'].forEach(function(v){
+  ['join','home','kitchen','fridge','list','cycle','study','cat'].forEach(function(v){
     document.getElementById('v-'+v).classList.toggle('on',UI.view===v);
   });
   document.getElementById('vTitle').textContent=TITLES[UI.view]||'家';
@@ -706,6 +775,7 @@ function render(){
   if(UI.view==='fridge')renderFridge();
   if(UI.view==='list')renderList();
   if(UI.view==='cycle')renderCycle();
+  if(UI.view==='study')renderStudy();
   if(UI.view==='cat')renderCat();
 }
 
@@ -858,6 +928,10 @@ function renderHome(){
   db.style.display=bedOn?'':'none';
   db.setAttribute('fill',bedOn?'var(--dot-on)':'var(--dot-mut)');
   db.classList.toggle('pulse',bedOn);
+  /* 书房圆点：本周末有定下来的事 */
+  var wk=thisWeekend();
+  var studyOn=D.events.some(function(ev){return ev.status==='plan'&&ev.date&&ev.date>=wk.sat&&ev.date<=wk.sun});
+  document.getElementById('dotStudy').style.display=studyOn?'':'none';
 }
 
 function renderKitchen(){
@@ -989,6 +1063,87 @@ function renderCycle(){
     '</div>';
   }
   body.innerHTML=html;
+}
+
+/* ---------- 书房 · 渲染 ---------- */
+function evRow(ev,hot){
+  var m=ev.member?member(ev.member):null;
+  var sub=[];
+  if(ev.date)sub.push(evDateLabel(ev.date));
+  if(ev.seg)sub.push(ev.seg);
+  sub.push(kindLabel(ev.kind));
+  if(m)sub.push(esc(m.name)+'提的');
+  if(ev.note)sub.push(esc(ev.note));
+  var right='';
+  if(ev.status==='plan'){
+    right='<span class="evacts">'+
+      '<button class="btn small" data-act="eventDone" data-id="'+ev.id+'">做了</button>'+
+      '<button class="btn ghost small" data-act="eventSkip" data-id="'+ev.id+'">没成</button></span>';
+  }else if(ev.status==='done'){
+    right='<span class="evtag"><span class="did">做了</span>'+(ratingLabel(ev.rating)?' · '+ratingLabel(ev.rating):'')+'</span>';
+  }else if(ev.status==='skip'){
+    right='<span class="evtag">没去成</span>';
+  }else{
+    right='<span class="evtag">想做</span>';
+  }
+  return '<div class="prow" data-act="eventEdit" data-id="'+ev.id+'" role="button" tabindex="0">'+
+    (hot?'<span class="d pulse"></span>':'<span class="d mut"></span>')+
+    '<div class="pdate">'+esc(ev.title)+'<span class="sub">'+sub.join(' · ')+'</span></div>'+right+'</div>';
+}
+function renderStudy(){
+  var wk=thisWeekend(),today=todayIso();
+  var thisWk=[],later=[],ideas=[],past=[];
+  D.events.forEach(function(ev){
+    if(!ev.date){ideas.push(ev);return}
+    if(ev.date>=wk.sat&&ev.date<=wk.sun)thisWk.push(ev);
+    else if(ev.date>wk.sun)later.push(ev);
+    else past.push(ev);
+  });
+  thisWk.sort(function(a,b){return (a.date+(a.seg||'')).localeCompare(b.date+(b.seg||''))});
+  later.sort(function(a,b){return a.date<b.date?-1:1});
+  past.sort(function(a,b){return a.date>b.date?-1:1});
+  var html='';
+  /* 本周末 */
+  html+='<div class="ig-title">本周末 · '+weekendLabel(wk)+'</div>';
+  if(thisWk.length){
+    html+=thisWk.map(function(ev){
+      return evRow(ev,ev.status==='plan'&&(ev.date===today||ev.date===isoAdd(1)));
+    }).join('');
+  }else{
+    html+='<div class="empty" style="padding:14px">这个周末还没有安排<br>想干什么，记一笔</div>';
+  }
+  /* 往后定的 */
+  if(later.length){
+    html+='<div class="ig-title" style="margin-top:14px">往后定的</div>';
+    html+=later.map(function(ev){return evRow(ev,false)}).join('');
+  }
+  /* 想做池 */
+  html+='<div class="ig-title" style="margin-top:14px">想做池 · 还没定日子</div>';
+  if(ideas.length){
+    html+=ideas.map(function(ev){return evRow(ev,false)}).join('');
+  }else{
+    html+='<div class="empty" style="padding:14px">听到什么好玩的，先丢进来</div>';
+  }
+  /* 往事：按周末分组（新的在上） */
+  if(past.length){
+    html+='<div class="ig-title" style="margin-top:14px">往事</div>';
+    var groups=[];
+    past.forEach(function(ev){
+      var w=weekendOf(ev.date);
+      if(!groups.length||groups[groups.length-1].key!==w.sat)groups.push({key:w.sat,w:w,list:[]});
+      groups[groups.length-1].list.push(ev);
+    });
+    groups.forEach(function(g){
+      html+='<div class="flabel" style="margin:10px 0 6px">'+weekendLabel(g.w)+'</div>';
+      html+=g.list.map(function(ev){return evRow(ev,false)}).join('');
+    });
+  }
+  /* 回顾门槛提示 */
+  var doneN=D.events.filter(function(ev){return ev.status==='done'}).length;
+  html+='<div class="hint" style="text-align:center;margin-top:14px">'+(doneN<8
+    ?('已做完 '+doneN+' 件 · 攒到 8 件，书房会长出「回顾」')
+    :(doneN+' 件了 · 「回顾」在下一个版本等你'))+'</div>';
+  document.getElementById('studyBody').innerHTML=html;
 }
 
 /* ---------- 弹层 ---------- */
@@ -1168,6 +1323,64 @@ function periodImportSheet(){
     '<div class="hint">支持 2023-01-05 / 2023.3.6 / 2023/4/2 三种写法，备注跟在日期后面；已记过的日期只更新备注，不会重复。单条的补充用「记一笔」就行。</div>'+
     '<div class="sh-actions"><button class="btn" data-act="periodImportGo">全部记入</button></div>'
   );
+}
+
+/* ---------- 书房弹层 ---------- */
+function whoChipsEvent(mid){
+  return '<div class="mchips" id="eWho">'+
+  D.members.map(function(m){
+    return '<span class="mchip'+(m.id===mid?' on':'')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+'</span>';
+  }).join('')+'</div>';
+}
+function eventSheet(ev){
+  var wk=thisWeekend();
+  var date=ev?ev.date:'';
+  openSheet(shHead(ev?'编辑这件事':'记一笔 · 新鲜事')+
+    '<div class="flabel">做什么</div>'+
+    '<input class="finput" id="eTitle" value="'+esc(ev?ev.title:'')+'" placeholder="比如：去新开的那家云南菜馆">'+
+    '<div class="flabel">哪种类型</div><div class="kchips" id="eKind">'+
+    KINDS.map(function(k){return '<button data-k="'+k[0]+'" class="'+(ev&&ev.kind===k[0]?'on':'')+'">'+k[1]+'</button>'}).join('')+'</div>'+
+    '<div class="flabel">哪天</div><div class="seg2" id="eDateQuick">'+
+      '<button data-d="'+wk.sat+'" class="'+(date===wk.sat?'on':'')+'">这周六</button>'+
+      '<button data-d="'+wk.sun+'" class="'+(date===wk.sun?'on':'')+'">这周日</button>'+
+      '<button data-d="" class="'+(!date?'on':'')+'">先不定</button></div>'+
+    '<input class="finput" id="eDate" type="date" value="'+esc(date)+'" style="max-width:180px;margin-top:8px">'+
+    '<div class="flabel">时间段</div><div class="seg2" id="eSeg">'+
+    SEGS.map(function(s){return '<button data-s="'+s+'" class="'+((ev?ev.seg:'')===s?'on':'')+'">'+s+'</button>'}).join('')+'</div>'+
+    '<div class="flabel">谁提的</div>'+whoChipsEvent(ev?(ev.member||null):(AUTH?AUTH.me:null))+
+    '<div class="flabel">备注（可不填）</div>'+
+    '<input class="finput" id="eNote" value="'+esc(ev?ev.note:'')+'" placeholder="比如：记得带伞">'+
+    '<div class="hint">先不定 = 泡进「想做池」，之后随时定日子；做完时可以顺手打个回味，攒着以后分析你们爱干什么。</div>'+
+    '<div class="sh-actions"><button class="btn" data-act="eventSave" data-id="'+(ev?ev.id:'')+'">保存</button></div>'+
+    (ev?'<div class="sh-actions" style="margin-top:9px">'+
+      ((ev.status==='done'||ev.status==='skip')?'<button class="btn ghost" data-act="eventReopen" data-id="'+ev.id+'">改回还没做</button>':'')+
+      '<button class="btn danger" data-act="eventDel" data-id="'+ev.id+'" data-armed="0">删除这件事</button></div>':'')
+  );
+  var di=document.getElementById('eDate');
+  di.addEventListener('change',function(){
+    document.querySelectorAll('#eDateQuick button').forEach(function(b){
+      b.classList.toggle('on',b.dataset.d===(di.value||''));
+    });
+  });
+}
+function doneSheet(ev){
+  openSheet(shHead('做完了 · '+esc(ev.title))+
+    '<div class="flabel">回味怎么样？</div><div class="kchips" id="eRate">'+
+    [1,2,3].map(function(r){
+      return '<button data-r="'+r+'" class="'+(ev.rating===r?'on':'')+'">'+ratingLabel(r)+'</button>';
+    }).join('')+'</div>'+
+    '<div class="hint">频次看做得多不多，回味看爱不爱 —— 两个都攒，以后「回顾」才看得清你们的口味。</div>'+
+    '<div class="sh-actions"><button class="btn" data-act="eventDoneGo" data-id="'+ev.id+'">好了</button></div>'+
+    '<div class="sh-actions" style="margin-top:9px"><button class="btn ghost" data-act="eventDoneSkip" data-id="'+ev.id+'">先不评，就是做完了</button></div>'
+  );
+}
+function eventMarkDone(id,rate){
+  var ev=evById(id);
+  if(!ev){closeSheet();return}
+  var d=(ev.date&&ev.date<=todayIso())?ev.date:todayIso(); /* 想做池里的事，做完落在今天 */
+  run(api('PATCH','weekend_events?id=eq.'+id,
+    {status:'done',rating:rate,event_date:d,updated_at:new Date().toISOString()},'return=minimal'),
+    function(){closeSheet();toast('做完了 · 又攒了一件')});
 }
 
 function memberSheet(){
@@ -1432,6 +1645,71 @@ document.addEventListener('click',function(e){
       break;
     }
 
+    /* 书房 · 周末新鲜事 */
+    case 'eventNew':eventSheet(null);break;
+    case 'eventEdit':
+      if(e.target.closest('button'))break;
+      var ev0=evById(el.dataset.id);
+      if(ev0)eventSheet(ev0);
+      break;
+    case 'eventSave':{
+      var eEv=el.dataset.id?evById(el.dataset.id):null;
+      var eTitle=document.getElementById('eTitle').value.trim();
+      if(!eTitle){toast('写点什么');return}
+      var eKindBtn=document.querySelector('#eKind .on');
+      if(!eKindBtn){toast('挑个类型');return}
+      var eDate=document.getElementById('eDate').value||'';
+      if(eDate&&!/^\d{4}-\d{2}-\d{2}$/.test(eDate)){toast('日期看着不对');return}
+      var eSegBtn=document.querySelector('#eSeg .on');
+      var eWhoBtn=document.querySelector('#eWho .on');
+      var ePayload={
+        title:eTitle,kind:eKindBtn.dataset.k,
+        event_date:eDate||null,
+        time_seg:eSegBtn?eSegBtn.dataset.s:null,
+        member_id:eWhoBtn?parseInt(eWhoBtn.dataset.mid,10):null,
+        note:document.getElementById('eNote').value.trim(),
+        updated_at:new Date().toISOString()
+      };
+      var eP;
+      if(eEv){
+        if(eEv.status==='idea'||eEv.status==='plan')ePayload.status=eDate?'plan':'idea';
+        eP=api('PATCH','weekend_events?id=eq.'+eEv.id,ePayload,'return=minimal');
+      }else{
+        ePayload.family_id=AUTH.fid;
+        ePayload.status=eDate?'plan':'idea';
+        ePayload.created_by=AUTH.me;
+        eP=api('POST','weekend_events',ePayload,'return=minimal');
+      }
+      run(eP,function(){closeSheet();toast(eEv?'已保存':'记下了 · '+eTitle)});
+      break;
+    }
+    case 'eventDel':
+      if(armBtn(el))return;
+      run(api('DELETE','weekend_events?id=eq.'+el.dataset.id),function(){closeSheet();toast('已删除')});
+      break;
+    case 'eventDone':{
+      var ed=evById(el.dataset.id);
+      if(ed)doneSheet(ed);
+      break;
+    }
+    case 'eventDoneGo':{
+      var rb=document.querySelector('#eRate .on');
+      eventMarkDone(el.dataset.id,rb?parseInt(rb.dataset.r,10):null);
+      break;
+    }
+    case 'eventDoneSkip':eventMarkDone(el.dataset.id,null);break;
+    case 'eventSkip':
+      run(api('PATCH','weekend_events?id=eq.'+el.dataset.id,{status:'skip',updated_at:new Date().toISOString()},'return=minimal'),
+        '记下了 · 没去成');
+      break;
+    case 'eventReopen':{
+      var er=evById(el.dataset.id);
+      if(!er){closeSheet();return}
+      run(api('PATCH','weekend_events?id=eq.'+er.id,{status:er.date?'plan':'idea',rating:null,updated_at:new Date().toISOString()},'return=minimal'),
+        function(){closeSheet();toast('改回没做了')});
+      break;
+    }
+
     /* 成员 */
     case 'leave':
       closeSheet();logout();toast('已退出 · 随时可以再进来');
@@ -1561,9 +1839,9 @@ function saveInv(el){
   run(p,function(){closeSheet()});
 }
 
-/* 弹层内单选 chips（mchip / seg2） */
+/* 弹层内单选 chips（mchip / seg2 / kchips） */
 document.addEventListener('click',function(e){
-  var ch=e.target.closest('.mchip,.seg2 button');
+  var ch=e.target.closest('.mchip,.seg2 button,.kchips button');
   if(!ch)return;
   if(e.target.tagName==='INPUT')return;
   var group=ch.parentElement;
@@ -1585,6 +1863,10 @@ document.addEventListener('click',function(e){
     toast('切到 '+(member(AUTH.me)||{}).name);
   }
   if(group.id==='pWho')periodCheckExisting(); /* 记一笔：换人后重新检查该天是否已记录 */
+  if(group.id==='eDateQuick'){ /* 书房：快捷日期同步写进日期输入框 */
+    var edi=document.getElementById('eDate');
+    if(edi)edi.value=ch.dataset.d||'';
+  }
 });
 
 /* 改名（防抖 → PATCH） */
