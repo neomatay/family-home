@@ -244,6 +244,11 @@ svg text{user-select:none}
 .kchips{display:flex;flex-wrap:wrap;gap:6px}
 .kchips button{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:12.5px;cursor:pointer}
 .kchips button.on{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.kchips .kadd{border-style:dashed;background:transparent} /* ＋ 新类型（虚线，不参与单选） */
+.krow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:11px 13px;margin-bottom:7px}
+.kname{flex:1;min-width:0;font-size:14px;font-weight:500}
+.kname .kused{display:block;font-size:11px;color:var(--ink2);font-weight:400;margin-top:1px}
+.kacts{display:flex;gap:7px;flex:none}
 .evacts{display:flex;gap:6px;flex:none;align-items:center}
 .evacts .btn{padding:4px 11px;font-size:11.5px;border-radius:8px}
 .evtag{font-size:11px;flex:none;color:var(--ink2);line-height:1.5;text-align:right}
@@ -527,7 +532,10 @@ svg text{user-select:none}
   <section class="view" id="v-study">
     <div class="vhead">
       <div><div class="vt">周末新鲜事</div><div class="vs">书房 · 记下想干的 · 定日子 · 做完打个回味</div></div>
-      <button class="btn small" data-act="eventNew">记一笔</button>
+      <div style="display:flex;gap:7px">
+        <button class="btn small ghost" data-act="kindManage">类型</button>
+        <button class="btn small" data-act="eventNew">记一笔</button>
+      </div>
     </div>
     <div class="stack" id="studyBody"></div>
   </section>
@@ -559,8 +567,8 @@ var SUPA_KEY='sb_publishable_sEnTySyQHRHFJ71tWCoekg_Vvoy8ctM';
 
 /* ---------- 状态 ---------- */
 var AUTH=null;   /* {fid, code, me} 家庭口令，存本机 */
-var D={members:[],dishes:[],inv:[],res:[],shop:[],periods:[],events:[],familyName:''};
-var UI={view:'join',ktab:'menu',ptab:null,cycleHistory:false,cycleYear:null};
+var D={members:[],dishes:[],inv:[],res:[],shop:[],periods:[],events:[],kinds:[],familyName:''};
+var UI={view:'join',ktab:'menu',ptab:null,cycleHistory:false,cycleYear:null,eKindSel:''};
 var busy=false;  /* 同步中 */
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -574,7 +582,7 @@ function persistAuth(){try{localStorage.setItem('jia-auth-v2',JSON.stringify(AUT
 function persistCache(){try{localStorage.setItem('jia-cache-v2',JSON.stringify(D))}catch(_){}}
 
 try{AUTH=JSON.parse(localStorage.getItem('jia-auth-v2'))||null}catch(_){AUTH=null}
-try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members){D=_c;D.events=D.events||[]}}catch(_){}
+try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members){D=_c;D.events=D.events||[];D.kinds=D.kinds||[]}}catch(_){}
 
 function isoAdd(days){
   var d=new Date();d.setDate(d.getDate()+days);
@@ -651,11 +659,26 @@ var KINDS=[
   ['diy','手作'],['sport','运动'],['game','桌游'],['home','在家'],['trip','短途'],
   ['cat','猫事'],['other','其他']
 ];
-/* kind 是固定枚举（将来「回顾」的频次/回味分析靠它收敛分组），具体内容写在 title */
-function kindLabel(k){for(var i=0;i<KINDS.length;i++)if(KINDS[i][0]===k)return KINDS[i][1];return '其他'}
+/* kind = 内置枚举 key（out/expo/…）或家庭自定义类型名（weekend_kinds.label 原文）。
+   找不到内置 key 时原样返回 —— 自定义类型、历史遗留值都能显示。分析按 kind 值分组，依旧收敛。 */
+function kindLabel(k){for(var i=0;i<KINDS.length;i++)if(KINDS[i][0]===k)return KINDS[i][1];return k}
 var SEGS=['上午','下午','晚上','全天'];
 function evById(id){id=parseInt(id,10);for(var i=0;i<D.events.length;i++)if(D.events[i].id===id)return D.events[i];return null}
 function ratingLabel(r){return r===3?'值得':r===2?'一般':r===1?'不值':''}
+function kindById(id){id=parseInt(id,10);for(var i=0;i<D.kinds.length;i++)if(D.kinds[i].id===id)return D.kinds[i];return null}
+/* 新类型名是否撞车：内置 key、内置显示名、已有自定义名都不许重复 */
+function kindNameTaken(nl,excludeId){
+  for(var i=0;i<KINDS.length;i++)if(KINDS[i][0]===nl||KINDS[i][1]===nl)return true;
+  for(var j=0;j<D.kinds.length;j++)if(D.kinds[j].id!==excludeId&&D.kinds[j].label===nl)return true;
+  return false;
+}
+/* 记一笔弹层的类型 chips：内置 + 家庭自定义 + 虚线「＋ 新类型」 */
+function kindChips(cur){
+  var h=KINDS.map(function(k){return '<button data-k="'+k[0]+'" class="'+(cur===k[0]?'on':'')+'">'+k[1]+'</button>'}).join('');
+  D.kinds.forEach(function(k){h+='<button data-k="'+esc(k.label)+'" class="'+(cur===k.label?'on':'')+'">'+esc(k.label)+'</button>'});
+  h+='<button data-act="kindAdd" class="kadd" aria-label="新增类型">＋ 新类型</button>';
+  return '<div class="kchips" id="eKind">'+h+'</div>';
+}
 /* 眼前的周末：周六日当天 = 正在过的这个；周一到周五 = 即将到来的那个 */
 function thisWeekend(){
   var wd=new Date().getDay();
@@ -704,7 +727,7 @@ function api(method,path,body,prefer){
   });
 }
 
-/* 同步：拉全量（8 张表并行），存缓存并重渲染 */
+/* 同步：拉全量（9 张表并行），存缓存并重渲染 */
 function sync(initial){
   if(!AUTH||busy)return Promise.resolve();
   busy=true;
@@ -717,8 +740,9 @@ function sync(initial){
     api('GET','shopping?select=*&order=id.asc'),
     /* periods 表若尚未建（v0.3 SQL 未跑），容错为空，不影响其他功能 */
     api('GET','periods?select=*&order=start_date.desc').catch(function(){return null}),
-    /* weekend_events 表若尚未建（v0.5 SQL 未跑），同样容错为空 */
-    api('GET','weekend_events?select=*&order=created_at.desc').catch(function(){return null})
+    /* weekend_events / weekend_kinds 表若尚未建（v0.5/v0.5.1 SQL 未跑），同样容错为空 */
+    api('GET','weekend_events?select=*&order=created_at.desc').catch(function(){return null}),
+    api('GET','weekend_kinds?select=*&order=created_at.asc').catch(function(){return null})
   ]).then(function(rs){
     if(!rs[0].length){ /* 邀请码失效/家被删 */
       logout();toast('邀请码失效了，重新进门吧');busy=false;return;
@@ -734,6 +758,7 @@ function sync(initial){
     D.shop=rs[5];
     D.periods=(rs[6]||[]).map(function(p){return {id:p.id,member:p.member_id,date:p.start_date,note:p.note||''}});
     D.events=(rs[7]||[]).map(function(e){return {id:e.id,title:e.title,kind:e.kind,date:e.event_date||'',seg:e.time_seg||'',status:e.status,rating:e.rating,member:e.member_id,note:e.note||''}});
+    D.kinds=(rs[8]||[]).map(function(k){return {id:k.id,label:k.label}});
     persistCache();
     if(UI.view!=='join')render();
   }).catch(function(e){
@@ -1414,8 +1439,8 @@ function eventSheet(ev){
   openSheet(shHead(ev?'编辑这件事':'记一笔 · 新鲜事')+
     '<div class="flabel">做什么</div>'+
     '<input class="finput" id="eTitle" value="'+esc(ev?ev.title:'')+'" placeholder="比如：去新开的那家云南菜馆">'+
-    '<div class="flabel">哪种类型</div><div class="kchips" id="eKind">'+
-    KINDS.map(function(k){return '<button data-k="'+k[0]+'" class="'+(ev&&ev.kind===k[0]?'on':'')+'">'+k[1]+'</button>'}).join('')+'</div>'+
+    '<div class="flabel">哪种类型</div>'+
+    kindChips(ev?ev.kind:'')+
     '<div class="flabel">哪天</div><div class="seg2" id="eDateQuick">'+
       '<button data-d="'+wk.sat+'" class="'+(date===wk.sat?'on':'')+'">这周六</button>'+
       '<button data-d="'+wk.sun+'" class="'+(date===wk.sun?'on':'')+'">这周日</button>'+
@@ -1438,6 +1463,20 @@ function eventSheet(ev){
       b.classList.toggle('on',b.dataset.d===(di.value||''));
     });
   });
+  UI.eKindSel=ev?ev.kind:'';
+}
+/* 管理自定义类型：改名 / 删除（改名会连带把用过它的事一起改） */
+function kindManageSheet(){
+  var rows=D.kinds.map(function(k){
+    var used=D.events.filter(function(e){return e.kind===k.label}).length;
+    return '<div class="krow"><div class="kname">'+esc(k.label)+
+      '<span class="kused">'+(used?used+' 件事在用':'还没用过')+'</span></div>'+
+      '<div class="kacts"><button class="btn small ghost" data-act="kindRename" data-id="'+k.id+'">改名</button>'+
+      '<button class="btn small danger" data-act="kindDel" data-id="'+k.id+'" data-armed="0">删除</button></div></div>';
+  }).join('');
+  openSheet(shHead('管理自定义类型')+
+    (rows||'<div class="empty" style="padding:18px 12px">还没有自定义类型<br>记一笔时点「＋ 新类型」就能加</div>')+
+    '<div class="hint">类型是两个人共享的。改名会把用过它的事一起改过去；有事情在用的类型删不掉，先把它们改成别的类型。</div>');
 }
 function doneSheet(ev){
   openSheet(shHead('做完了 · '+esc(ev.title))+
@@ -1789,6 +1828,69 @@ document.addEventListener('click',function(e){
       break;
     }
 
+    /* 书房 · 自定义类型 */
+    case 'kindAdd':{ /* 记一笔弹层内联输入，不打断已填的内容 */
+      var kr=document.getElementById('eKind');
+      if(!kr)break;
+      kr.innerHTML='<input class="finput" id="eNewKind" maxlength="12" placeholder="类型名，比如：逛博物馆" style="margin:2px 0 8px">'+
+        '<div class="kchips" style="gap:7px"><button class="btn small" data-act="kindAddGo">加进去</button><button class="btn small ghost" data-act="kindCancel">取消</button></div>';
+      var ni=document.getElementById('eNewKind');
+      if(ni)ni.focus();
+      break;
+    }
+    case 'kindAddGo':{
+      var nl=document.getElementById('eNewKind').value.trim();
+      if(!nl){toast('写个类型名');return}
+      if(nl.length>12){toast('最多 12 个字');return}
+      if(kindNameTaken(nl)){toast('和已有的类型重名了');return}
+      run(api('POST','weekend_kinds',{family_id:AUTH.fid,label:nl,created_by:AUTH.me},'return=minimal'),
+        function(){
+          UI.eKindSel=nl;
+          var kr2=document.getElementById('eKind');
+          if(kr2)kr2.outerHTML=kindChips(nl);
+          toast('「'+nl+'」加好了');
+        });
+      break;
+    }
+    case 'kindCancel':{
+      var kr3=document.getElementById('eKind');
+      if(kr3)kr3.outerHTML=kindChips(UI.eKindSel);
+      break;
+    }
+    case 'kindManage':kindManageSheet();break;
+    case 'kindRename':{
+      var rk=kindById(el.dataset.id);
+      if(!rk)break;
+      var row=el.closest('.krow');
+      if(row)row.innerHTML='<input class="finput" id="kRename" maxlength="12" value="'+esc(rk.label)+'">'+
+        '<div class="kacts" style="margin-top:8px"><button class="btn small" data-act="kindRenameGo" data-id="'+rk.id+'">改好</button>'+
+        '<button class="btn small ghost" data-act="kindManage">取消</button></div>';
+      break;
+    }
+    case 'kindRenameGo':{
+      var rk2=kindById(el.dataset.id);
+      if(!rk2){closeSheet();return}
+      var nl2=document.getElementById('kRename').value.trim();
+      if(!nl2){toast('类型名不能是空的');return}
+      if(nl2.length>12){toast('最多 12 个字');return}
+      if(kindNameTaken(nl2,rk2.id)){toast('和已有的类型重名了');return}
+      var old=rk2.label;
+      /* 改词表 + 连带把用过这个类型的事一起改过去 */
+      run(api('PATCH','weekend_kinds?id=eq.'+rk2.id,{label:nl2},'return=minimal')
+        .then(function(){return api('PATCH','weekend_events?kind=eq.'+encodeURIComponent(old),{kind:nl2,updated_at:new Date().toISOString()},'return=minimal')}),
+        function(){toast('改好了 · '+old+' → '+nl2);kindManageSheet()});
+      break;
+    }
+    case 'kindDel':{
+      if(armBtn(el))return;
+      var kd=kindById(el.dataset.id);
+      if(!kd)break;
+      var cnt=D.events.filter(function(e){return e.kind===kd.label}).length;
+      if(cnt){el.dataset.armed='0';el.textContent='删除';toast('还有 '+cnt+' 件事在用「'+kd.label+'」，先改掉再删');return}
+      run(api('DELETE','weekend_kinds?id=eq.'+kd.id),function(){toast('删掉了');kindManageSheet()});
+      break;
+    }
+
     /* 成员 */
     case 'leave':
       closeSheet();logout();toast('已退出 · 随时可以再进来');
@@ -1922,6 +2024,7 @@ function saveInv(el){
 document.addEventListener('click',function(e){
   var ch=e.target.closest('.mchip,.seg2 button,.kchips button');
   if(!ch)return;
+  if(ch.dataset.act)return; /* 「＋ 新类型 / 加进去 / 取消」走 data-act，不参与单选 */
   if(e.target.tagName==='INPUT')return;
   var group=ch.parentElement;
   if(group.id==='cookChips'){
@@ -1942,6 +2045,7 @@ document.addEventListener('click',function(e){
     toast('切到 '+(member(AUTH.me)||{}).name);
   }
   if(group.id==='pWho')periodCheckExisting(); /* 记一笔：换人后重新检查该天是否已记录 */
+  if(group.id==='eKind')UI.eKindSel=ch.dataset.k; /* 书房：记住当前选的类型（取消新增时恢复） */
   if(group.id==='eDateQuick'){ /* 书房：快捷日期同步写进日期输入框 */
     var edi=document.getElementById('eDate');
     if(edi)edi.value=ch.dataset.d||'';
