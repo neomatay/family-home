@@ -206,3 +206,32 @@ create policy "weekend_event all" on public.weekend_events for all
 
 create index on public.weekend_events (family_id);
 create index on public.weekend_events (family_id, event_date);
+
+-- ============================================================
+-- v0.5.1（2026-11-10）：weekend_kinds —— 家庭自定义「新鲜事类型」
+-- 内置 12 类不够用时，家庭可自建类型（两人共享同一套词表）。
+-- weekend_events.kind 直接存类型名（label 文本）：
+--   · 内置类型存枚举 key（out/expo/...）
+--   · 自定义类型存 label 本身
+-- 前端 kindLabel() 找不到内置 key 时原样显示 —— 所以删表前的
+-- 旧数据、甚至类型被删后遗留的 kind 值都能显示，不会丢字。
+-- 约束：label 1–12 字，家庭内唯一（unique）；有事件在用的类型
+-- 前端禁止删除（先改事件）；改名会连带 PATCH 事件一起改。
+-- 普通写操作，无 upsert。RLS 同其他家庭表。
+-- ============================================================
+
+create table public.weekend_kinds (
+  id          bigint generated always as identity primary key,
+  family_id   uuid not null references public.families(id) on delete cascade,
+  label       text not null check (char_length(label) between 1 and 12),
+  created_by  bigint,
+  created_at  timestamptz not null default now(),
+  unique (family_id, label)
+);
+
+alter table public.weekend_kinds enable row level security;
+create policy "weekend_kind all" on public.weekend_kinds for all
+  using (family_id = public.current_family_id())
+  with check (family_id = public.current_family_id());
+
+create index on public.weekend_kinds (family_id);
