@@ -26,7 +26,7 @@ index.html
 ├── <svg> 矢量小家（交互层：.hot 热区 + 状态圆点）
 ├── 视图 section（#v-join 进门 / #v-home / #v-kitchen / #v-fridge / #v-list / #v-cycle / #v-study）
 └── <script>（AUTH/D/UI 状态 + api() REST 层 + render + 事件）
-supabase/migration.sql  九张表 + RLS + 校验函数（v0.2 段之后是追加段）
+supabase/migration.sql  十张表 + RLS + 校验函数（v0.2 段之后是追加段）
 docs/PRD-v0.1.md        产品定义
 ```
 
@@ -75,7 +75,7 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 
 记录两个人每个周末做的事，攒数据给将来的「回顾」分析。**分析靠字段收敛，这是设计核心**：
 
-- `kind` 是**固定枚举**（前端 `KINDS`，12 项 + other），不许改成自由文本 —— 频次/回味分析靠它分组；具体内容写 `title`。
+- `kind` = **内置枚举 key**（前端 `KINDS`，12 项 + other）或**家庭自定义类型名**（第 10 张表 `weekend_kinds.label` 原文，两人共享一套词表，v0.5.1）。**不是每件事的自由文本** —— 分析按 kind 值分组，自定义类型天然成组。约束：label 1–12 字、家庭内唯一；改名会连带 PATCH `weekend_events?kind=eq.旧名`；有事件在用的类型前端禁止删除。`kindLabel()` 找不到内置 key 时原样返回（遗留值不丢字）。具体内容写 `title`。
 - 状态生命周期：`idea`（想做，`event_date` 为空 → 想做池）→ `plan`（定了日子）→ `done` / `skip`。做完可选 `rating`（1 不值 / 2 一般 / 3 值得）。「回味 × 频次」是将来回顾的核心数据 —— `rating` 和 `member_id` 是**为分析预埋的字段**，别删。
 - 普通写操作，无唯一约束、不需要 upsert；PATCH 记得把 `updated_at` 放进 payload。
 - 「眼前的周末」用 `thisWeekend()`：工作日指即将到来的周末，周六日指正在过的这个 —— **别用自然周**（周一看"本周末"必须是未来那个）。往事分组用 `weekendOf(iso)`（周六开头，工作日归上一个周六）。
