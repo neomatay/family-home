@@ -235,3 +235,40 @@ create policy "weekend_kind all" on public.weekend_kinds for all
   with check (family_id = public.current_family_id());
 
 create index on public.weekend_kinds (family_id);
+
+-- ============================================================
+-- v0.6（2026-11-11）：birthdays —— 玄关「生日挂念」
+-- 记朋友和孩子们的生日，农历/公历都有，每年自动对准公历日期。
+--   cal   'lunar' 农历（大多数）/ 'solar' 公历
+--   bm/bd 生日月、日。农历：bm 1–12（只存正常月，遇闰月年按
+--         正常月过），bd 1–30（腊月三十在无三十的年自动过廿九，
+--         前端 clamp）；公历：bm 1–12，bd 1–31（前端按月校验）
+--   birth_year 可空：出生年（算周岁用）
+--   relation  自由短文本（朋友/孩子/侄女…）
+--   note      礼物想法、备注
+-- 农历→公历换算在前端完成（index.html 内嵌 1900–2100 压缩历表，
+-- 已用春节/中秋/端午/重阳/腊八/除夕/闰月等 38+ 锚点验证），云端
+-- 不存换算结果 —— 生日是「每年重复的规则」，不是一次性日期。
+-- 普通写操作，无 upsert。RLS 同其他家庭表。
+-- ============================================================
+
+create table public.birthdays (
+  id          bigint generated always as identity primary key,
+  family_id   uuid not null references public.families(id) on delete cascade,
+  name        text not null check (char_length(name) between 1 and 24),
+  cal         text not null default 'lunar' check (cal in ('lunar','solar')),
+  bm          int not null check (bm between 1 and 12),
+  bd          int not null check (bd between 1 and 31),
+  birth_year  int,
+  relation    text not null default '',
+  note        text not null default '',
+  created_by  bigint,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.birthdays enable row level security;
+create policy "birthday all" on public.birthdays for all
+  using (family_id = public.current_family_id())
+  with check (family_id = public.current_family_id());
+
+create index on public.birthdays (family_id);
