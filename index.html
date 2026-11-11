@@ -127,6 +127,10 @@ svg text{user-select:none}
 .ktab{display:flex;gap:6px;margin-bottom:12px}
 .ktab button{flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:13px;cursor:pointer}
 .ktab button.on{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+/* 玄关 tab（结构与厨房 ktab 同款，但独立绑定，见 renderList） */
+.ltab{display:flex;gap:6px;margin-bottom:12px}
+.ltab button{flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:13px;cursor:pointer}
+.ltab button.on{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
 .dish-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .dish-name{font-size:19px}
 .times{font-size:11px;color:var(--ink2);white-space:nowrap}
@@ -165,6 +169,19 @@ svg text{user-select:none}
 .lname .note{display:block;font-size:11px;color:var(--ink2);font-weight:400;margin-top:1px}
 .lrow .x{width:26px;height:26px;border:none;background:none;color:var(--ink2);font-size:14px;cursor:pointer;flex:none}
 .clrbar{display:flex;justify-content:flex-end;margin-top:4px}
+
+/* 玄关 · 生日挂念（v0.6） */
+.bdrow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:11px 13px;margin-bottom:7px;cursor:pointer;font:inherit;color:inherit}
+.bdrow .bmain{flex:1;min-width:0}
+.bdrow .bname{display:block;font-size:14px;font-weight:500;color:var(--ink)}
+.bdrow .bsub{display:block;font-size:11px;color:var(--ink2);margin-top:1px}
+.bdrow .bnote{display:block;font-size:11px;color:var(--ink2);margin-top:2px}
+.bdcount{flex:none;text-align:right;font-size:10.5px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.bdcount b{display:block;font-size:15px;font-weight:700;color:var(--ink);margin-bottom:1px}
+.bdcount.today b{color:var(--dot-on)}
+.bdcount.soon b{color:var(--accent)}
+.selrow{display:flex;gap:8px}
+.selrow select{flex:1;min-width:0}
 
 /* 卧室 · 生理期（v0.3.2 重构：总览 + 每月开始日格子 + 间隔趋势 + 折叠历史） */
 .ptab{display:flex;gap:6px;margin-bottom:12px}
@@ -505,11 +522,15 @@ svg text{user-select:none}
     <div id="fridgeBody"></div>
   </section>
 
-  <!-- ============ 购物清单 ============ -->
+  <!-- ============ 玄关 · 清单与生日 ============ -->
   <section class="view" id="v-list">
-    <div class="vhead">
+    <div class="vhead" id="listHead">
       <div><div class="vt">购物清单</div><div class="vs">缺什么 · 买完勾掉</div></div>
       <button class="btn small" data-act="newShop">添加</button>
+    </div>
+    <div class="ltab" id="ltab">
+      <button data-act="ltab" data-tab="shop" class="on">清单</button>
+      <button data-act="ltab" data-tab="bd">生日</button>
     </div>
     <div id="listBody"></div>
     <div class="clrbar"><button class="btn ghost small" data-act="clearShop">清掉已购</button></div>
@@ -567,8 +588,8 @@ var SUPA_KEY='sb_publishable_sEnTySyQHRHFJ71tWCoekg_Vvoy8ctM';
 
 /* ---------- 状态 ---------- */
 var AUTH=null;   /* {fid, code, me} 家庭口令，存本机 */
-var D={members:[],dishes:[],inv:[],res:[],shop:[],periods:[],events:[],kinds:[],familyName:''};
-var UI={view:'join',ktab:'menu',ptab:null,cycleHistory:false,cycleYear:null,eKindSel:''};
+var D={members:[],dishes:[],inv:[],res:[],shop:[],periods:[],events:[],kinds:[],birthdays:[],familyName:''};
+var UI={view:'join',ktab:'menu',ltab:'shop',ptab:null,cycleHistory:false,cycleYear:null,eKindSel:'',bCal:'lunar',bBm:1,bBd:1};
 var busy=false;  /* 同步中 */
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -582,7 +603,7 @@ function persistAuth(){try{localStorage.setItem('jia-auth-v2',JSON.stringify(AUT
 function persistCache(){try{localStorage.setItem('jia-cache-v2',JSON.stringify(D))}catch(_){}}
 
 try{AUTH=JSON.parse(localStorage.getItem('jia-auth-v2'))||null}catch(_){AUTH=null}
-try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members){D=_c;D.events=D.events||[];D.kinds=D.kinds||[]}}catch(_){}
+try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members){D=_c;D.events=D.events||[];D.kinds=D.kinds||[];D.birthdays=D.birthdays||[]}}catch(_){}
 
 function isoAdd(days){
   var d=new Date();d.setDate(d.getDate()+days);
@@ -706,6 +727,95 @@ function evDateLabel(iso){
   return (d.getMonth()+1)+'月'+d.getDate()+'日 '+wdLabel(iso);
 }
 
+/* ---------- 玄关 · 生日挂念（v0.6）：农历换算 ---------- */
+/* 农历 1900–2100 压缩历表（每项一个农历年，1900 起）。位含义：
+   低 4 位 = 闰月月份（0 无闰）；0x10000 = 闰月 30 天；
+   0x8000>>m（m=1..12）= 第 m 个月是 30 天。
+   源自 yize/solarlunar 的 lunarInfo（MIT），已用春节/中秋/端午/重阳/
+   元宵/腊八/除夕/闰月等 38+ 锚点核验，覆盖 1900–2100。 */
+var LUNAR=[0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,
+0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,
+0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,
+0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,
+0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,
+0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,
+0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,
+0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,
+0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,
+0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,
+0x05ac0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,
+0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,
+0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,
+0x0ea65,0x0d530,0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,
+0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,
+0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63,0x09370,
+0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+0x092e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,
+0x0a6d0,0x055d4,0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,
+0x055a0,0x0aba4,0x0a5b0,0x052b0,0x0b273,0x06930,0x07337,0x06aa0,
+0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,0x0e968,0x0d520,
+0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a4d0,0x0d150,0x0f252,
+0x0d520];
+function lunarLeapMonth(y){return LUNAR[y-1900]&0xf} /* 0 = 无闰月 */
+function lunarLeapDays(y){var lm=LUNAR[y-1900]&0xf;return lm?((LUNAR[y-1900]&0x10000)?30:29):0}
+function lunarMonthDays(y,m){return (LUNAR[y-1900]&(0x10000>>m))?30:29}
+function lunarYearDays(y){ /* 348 = 12×29 基准，12 个大月位（0x8000..0x10）各 +1，再加深月天数 */
+  var s=348,b=LUNAR[y-1900],bit=0x8000;
+  while(bit>0x8){if(b&bit)s+=1;bit>>=1}
+  return s+lunarLeapDays(y);
+}
+/* 农历转公历。约定：只存正常月 1–12（本功能不区分闰月，闰月出生按
+   正常月过）；腊月三十遇无三十的年自动过廿九（ld 超 monthDays 收拢）。 */
+function lunar2solar(y,lm,ld){
+  if(y<1901||y>2100||lm<1||lm>12)return null;
+  var off=0,yy;
+  for(yy=1900;yy<y;yy++)off+=lunarYearDays(yy);
+  for(var m=1;m<lm;m++)off+=lunarMonthDays(y,m);
+  var leap=lunarLeapMonth(y);
+  if(leap&&leap<lm)off+=lunarLeapDays(y);
+  var md=lunarMonthDays(y,lm);
+  var d=new Date(1900,0,31); /* 农历 1900 年正月初一 = 公历 1900-01-31 */
+  d.setDate(d.getDate()+off+Math.min(ld,md)-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+/* 今天所在的农历年（春节前属于上一个农历年，用于「今年是哪天」） */
+function curLunarYear(){
+  var t=todayIso(),y=1900,ny;
+  while(y<2100){
+    ny=lunar2solar(y+1,1,1);
+    if(!ny||ny>t)break;
+    y++;
+  }
+  return y;
+}
+var LM_NAMES=['正月','二月','三月','四月','五月','六月','七月','八月','九月','十月','冬月','腊月'];
+var LD_NAMES=['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
+  '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+  '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+function bdById(id){id=parseInt(id,10);for(var i=0;i<D.birthdays.length;i++)if(D.birthdays[i].id===id)return D.birthdays[i];return null}
+function bdLabel(b){return b.cal==='solar'?(b.bm+' 月 '+b.bd+' 日'):(LM_NAMES[b.bm-1]+(LD_NAMES[b.bd-1]||b.bd+'日'))}
+/* 某个农历/公历年里生日的公历日期。公历 2.29 无闰年过 2.28；农历腊月三十无三十过廿九 */
+function bdSolve(b,yy){
+  if(b.cal==='solar'){
+    var dim=new Date(yy,b.bm,0).getDate();
+    return yy+'-'+String(b.bm).padStart(2,'0')+'-'+String(Math.min(b.bd,dim)).padStart(2,'0');
+  }
+  return lunar2solar(yy,b.bm,b.bd);
+}
+/* 距今天最近的一次生日（含今天）：农历按农历年推进，公历按公历年推进 */
+function bdNext(b){
+  var t=todayIso(),start=b.cal==='solar'?new Date().getFullYear():curLunarYear();
+  for(var k=0;k<4;k++){
+    var yy=start+k,iso=bdSolve(b,yy);
+    if(iso&&iso>=t)return {iso:iso,yy:yy,days:dayDiff(t,iso)};
+  }
+  return null;
+}
+function bdAge(b,yy){return b.birth_year?(yy-b.birth_year):null}
+
 /* ---------- Supabase REST ---------- */
 function api(method,path,body,prefer){
   var h={
@@ -727,7 +837,7 @@ function api(method,path,body,prefer){
   });
 }
 
-/* 同步：拉全量（9 张表并行），存缓存并重渲染 */
+/* 同步：拉全量（10 张表并行），存缓存并重渲染 */
 function sync(initial){
   if(!AUTH||busy)return Promise.resolve();
   busy=true;
@@ -740,9 +850,10 @@ function sync(initial){
     api('GET','shopping?select=*&order=id.asc'),
     /* periods 表若尚未建（v0.3 SQL 未跑），容错为空，不影响其他功能 */
     api('GET','periods?select=*&order=start_date.desc').catch(function(){return null}),
-    /* weekend_events / weekend_kinds 表若尚未建（v0.5/v0.5.1 SQL 未跑），同样容错为空 */
+    /* weekend_events / weekend_kinds / birthdays 同理（v0.5/v0.5.1/v0.6 SQL 未跑时容错为空） */
     api('GET','weekend_events?select=*&order=created_at.desc').catch(function(){return null}),
-    api('GET','weekend_kinds?select=*&order=created_at.asc').catch(function(){return null})
+    api('GET','weekend_kinds?select=*&order=created_at.asc').catch(function(){return null}),
+    api('GET','birthdays?select=*&order=created_at.asc').catch(function(){return null})
   ]).then(function(rs){
     if(!rs[0].length){ /* 邀请码失效/家被删 */
       logout();toast('邀请码失效了，重新进门吧');busy=false;return;
@@ -759,6 +870,7 @@ function sync(initial){
     D.periods=(rs[6]||[]).map(function(p){return {id:p.id,member:p.member_id,date:p.start_date,note:p.note||''}});
     D.events=(rs[7]||[]).map(function(e){return {id:e.id,title:e.title,kind:e.kind,date:e.event_date||'',seg:e.time_seg||'',status:e.status,rating:e.rating,member:e.member_id,note:e.note||''}});
     D.kinds=(rs[8]||[]).map(function(k){return {id:k.id,label:k.label}});
+    D.birthdays=(rs[9]||[]).map(function(b){return {id:b.id,name:b.name,cal:b.cal,bm:b.bm,bd:b.bd,birth_year:b.birth_year||null,relation:b.relation||'',note:b.note||''}});
     persistCache();
     if(UI.view!=='join')render();
   }).catch(function(e){
@@ -845,7 +957,7 @@ function openRes(){
 }
 
 /* ---------- 渲染 ---------- */
-var TITLES={join:'家',home:'家',kitchen:'厨房 · 家庭餐厅',fridge:'冰箱与库存',list:'购物清单',cycle:'卧室 · 生理期',study:'书房 · 周末新鲜事',cat:'猫角 · 猫猫管家'};
+var TITLES={join:'家',home:'家',kitchen:'厨房 · 家庭餐厅',fridge:'冰箱与库存',list:'玄关 · 清单与生日',cycle:'卧室 · 生理期',study:'书房 · 周末新鲜事',cat:'猫角 · 猫猫管家'};
 function render(){
   ['join','home','kitchen','fridge','list','cycle','study','cat'].forEach(function(v){
     document.getElementById('v-'+v).classList.toggle('on',UI.view===v);
@@ -978,9 +1090,20 @@ function renderHome(){
   var shopN=D.shop.filter(function(s){return !s.done}).length;
   var lowFood=lowCount('food');
   var lowCat=lowCount('cat');
+  /* 生日：今天过生日的 + 14 天内要备礼物的（玄关 · 生日挂念） */
+  var bdToday=[],bdSoon=[];
+  D.birthdays.forEach(function(b){
+    var nx=bdNext(b);
+    if(!nx)return;
+    if(nx.days===0)bdToday.push(b);
+    else if(nx.days<=14)bdSoon.push({b:b,days:nx.days});
+  });
+  bdSoon.sort(function(a,c){return a.days-c.days});
   var alerts=[];
   if(shopN)alerts.push('购物清单 '+shopN+' 项');
   if(lowFood)alerts.push('冰箱 '+lowFood+' 样快没了');
+  if(bdToday.length)alerts.push('今天 '+bdToday.map(function(x){return esc(x.name)}).join('、')+' 生日');
+  else if(bdSoon.length)alerts.push(esc(bdSoon[0].b.name)+' 生日还有 '+bdSoon[0].days+' 天 · 该备礼物了');
   if(alerts.length)tc.innerHTML+='<div class="alert"><span class="d pulse"></span><span>'+alerts.join(' · ')+'</span></div>';
 
   var hasResToday=res&&(res.date===todayIso()||res.date===isoAdd(1));
@@ -989,7 +1112,8 @@ function renderHome(){
   if(lowFood>0){fb.style.display='';document.getElementById('fridgeBadgeN').textContent=lowFood}
   else fb.style.display='none';
   var db=document.getElementById('doorBadge');
-  if(shopN>0){db.style.display='';document.getElementById('doorBadgeN').textContent=shopN}
+  var doorN=shopN+bdToday.length; /* 玄关门牌：待买 + 今天生日 */
+  if(doorN>0){db.style.display='';document.getElementById('doorBadgeN').textContent=doorN}
   else db.style.display='none';
   document.getElementById('dotCat').style.display=lowCat>0?'':'none';
 
@@ -1085,6 +1209,18 @@ function renderFridge(){
 }
 
 function renderList(){
+  var bd=UI.ltab==='bd';
+  document.getElementById('listHead').innerHTML=bd
+    ?'<div><div class="vt">生日挂念</div><div class="vs">朋友孩子的生日 · 农历公历都能记，每年自动对准</div></div><button class="btn small" data-act="bdNew">记一个</button>'
+    :'<div><div class="vt">购物清单</div><div class="vs">缺什么 · 买完勾掉</div></div><button class="btn small" data-act="newShop">添加</button>';
+  document.querySelectorAll('#ltab button').forEach(function(b){
+    b.classList.toggle('on',b.dataset.tab===UI.ltab);
+  });
+  document.querySelector('#v-list .clrbar').style.display=bd?'none':'';
+  if(bd)renderBdays();else renderShop();
+}
+
+function renderShop(){
   var html='';
   var items=D.shop.slice().sort(function(a,b){return (a.done?1:0)-(b.done?1:0)});
   if(!items.length)html='<div class="empty">清单是空的<br>预定菜时缺的原料会自动出现在这里</div>';
@@ -1093,6 +1229,33 @@ function renderList(){
     '<button class="ck" data-act="shopToggle" data-id="'+s.id+'" aria-label="勾选"></button>'+
     '<div class="lname">'+esc(s.name)+(s.note?'<span class="note">'+esc(s.note)+'</span>':'')+'</div>'+
     '<button class="x" data-act="shopDel" data-id="'+s.id+'" aria-label="删除">✕</button></div>';
+  });
+  document.getElementById('listBody').innerHTML=html;
+}
+
+/* 生日列表：按「距下一次生日」排序；≤14 天进入备礼期 */
+function renderBdays(){
+  var rows=D.birthdays.map(function(b){
+    var nx=bdNext(b);
+    return {b:b,days:nx?nx.days:Infinity,iso:nx?nx.iso:'',yy:nx?nx.yy:0};
+  }).sort(function(a,c){return a.days-c.days});
+  var html='';
+  if(!rows.length){
+    html='<div class="empty">还没有记生日<br>朋友孩子的农历公历生日都能记<br>每年自动算出对应的公历日子</div>';
+  }
+  rows.forEach(function(r){
+    var b=r.b,today=r.days===0,soon=r.days>0&&r.days<=14;
+    var age=bdAge(b,r.yy);
+    var sub=bdLabel(b)+(b.cal==='lunar'?' · 农历':' · 公历')+(b.relation?' · '+esc(b.relation):'')+(age!=null?' · 满 '+age+' 岁':'');
+    var cnt;
+    if(today)cnt='<span class="bdcount today"><b>今天</b><span>生日快乐</span></span>';
+    else if(r.days===Infinity)cnt='<span class="bdcount"><b>—</b></span>';
+    else cnt='<span class="bdcount'+(soon?' soon':'')+'"><b>'+r.days+'</b><span>天后 · '+r.iso.slice(5).replace('-','/')+'</span></span>';
+    html+='<button class="bdrow" type="button" data-act="bdEdit" data-id="'+b.id+'">'+
+      (today?'<span class="d pulse"></span>':(soon?'<span class="d"></span>':'<span class="d mut"></span>'))+
+      '<span class="bmain"><span class="bname">'+esc(b.name)+'</span><span class="bsub">'+sub+'</span>'+
+      (b.note?'<span class="bnote">'+esc(b.note)+'</span>':'')+
+      '</span>'+cnt+'</button>';
   });
   document.getElementById('listBody').innerHTML=html;
 }
@@ -1364,6 +1527,43 @@ function shopSheet(){
     '<div class="flabel">要买什么</div><input class="finput" id="sName" placeholder="比如：小葱">'+
     '<div class="sh-actions"><button class="btn" data-act="saveShop">加入清单</button></div>'
   );
+}
+
+/* ---------- 玄关 · 生日弹层 ---------- */
+function bdSheet(b){
+  UI.bCal=b?b.cal:'lunar';
+  UI.bBm=b?b.bm:1;
+  UI.bBd=b?b.bd:1;
+  openSheet(shHead(b?'编辑生日':'记一个生日')+
+    '<div class="flabel">TA 叫什么</div><input class="finput" id="bName" value="'+esc(b?b.name:'')+'" placeholder="比如：小雨">'+
+    '<div class="flabel">生日是农历还是公历</div><div class="seg2" id="bCal">'+
+      '<button data-cal="lunar" class="'+(UI.bCal==='lunar'?'on':'')+'">农历</button>'+
+      '<button data-cal="solar" class="'+(UI.bCal==='solar'?'on':'')+'">公历</button></div>'+
+    '<div class="flabel">生日</div><div class="selrow" id="bdSel"></div>'+
+    '<div class="hint">农历生日每年对应的公历日子自动换算；没有三十的腊月自动过廿九，闰月出生按正常月过。</div>'+
+    '<div class="flabel">出生年份（可不填，用来算周岁）</div><input class="finput" id="bYear" type="number" inputmode="numeric" value="'+(b&&b.birth_year?b.birth_year:'')+'" placeholder="比如 2018">'+
+    '<div class="flabel">TA 是谁的（可不填）</div><input class="finput" id="bRel" value="'+esc(b?b.relation:'')+'" placeholder="比如：朋友 / 侄女 / 楼下的小孩">'+
+    '<div class="flabel">礼物想法 · 备注（可不填）</div><input class="finput" id="bNote" value="'+esc(b?b.note:'')+'" placeholder="比如：喜欢恐龙">'+
+    '<div class="sh-actions"><button class="btn" data-act="bdSave" data-id="'+(b?b.id:'')+'">保存</button></div>'+
+    (b?'<div class="sh-actions" style="margin-top:9px"><button class="btn ghost" data-act="bdGift" data-id="'+b.id+'">礼物放进清单</button><button class="btn danger" data-act="bdDel" data-id="'+b.id+'" data-armed="0">删除</button></div>':'')
+  );
+  bdSelRender();
+}
+/* 月/日两个下拉。农历按当前农历年的月表生成日选项，公历按今年月长 */
+function bdSelRender(){
+  var cal=UI.bCal,bm=UI.bBm,bd=UI.bBd;
+  var dMax=cal==='lunar'?lunarMonthDays(curLunarYear(),bm):new Date(new Date().getFullYear(),bm,0).getDate();
+  if(bd>dMax)bd=dMax;
+  var h='<select class="finput" id="bBm">';
+  for(var m=1;m<=12;m++)h+='<option value="'+m+'"'+(m===bm?' selected':'')+'>'+(cal==='lunar'?LM_NAMES[m-1]:(m+' 月'))+'</option>';
+  h+='</select><select class="finput" id="bBd">';
+  for(var d=1;d<=dMax;d++)h+='<option value="'+d+'"'+(d===bd?' selected':'')+'>'+(cal==='lunar'?LD_NAMES[d-1]:(d+' 日'))+'</option>';
+  h+='</select>';
+  UI.bBd=bd;
+  document.getElementById('bdSel').innerHTML=h;
+  var selM=document.getElementById('bBm'),selD=document.getElementById('bBd');
+  selM.addEventListener('change',function(){UI.bBm=parseInt(selM.value,10);bdSelRender()});
+  selD.addEventListener('change',function(){UI.bBd=parseInt(selD.value,10)});
 }
 
 function whoChips(id){
@@ -1697,6 +1897,48 @@ document.addEventListener('click',function(e){
     case 'clearShop':
       run(api('DELETE','shopping?done=eq.true'));
       break;
+
+    /* 玄关 · 生日挂念 */
+    case 'ltab':
+      UI.ltab=el.dataset.tab;render();break;
+    case 'bdNew':bdSheet(null);break;
+    case 'bdEdit':
+      var bde=bdById(el.dataset.id);
+      if(bde)bdSheet(bde);
+      break;
+    case 'bdSave':{
+      var bName=document.getElementById('bName').value.trim();
+      if(!bName){toast('先写名字');return}
+      var bBm=parseInt(document.getElementById('bBm').value,10);
+      var bBd=parseInt(document.getElementById('bBd').value,10);
+      var bYearRaw=document.getElementById('bYear').value.trim();
+      var bYear=bYearRaw?parseInt(bYearRaw,10):null;
+      if(bYearRaw&&(!bYear||bYear<1900||bYear>2100)){toast('出生年份填 1900–2100 之间的数字');return}
+      var bPayload={name:bName,cal:UI.bCal,bm:bBm,bd:bBd,birth_year:bYear,
+        relation:document.getElementById('bRel').value.trim(),
+        note:document.getElementById('bNote').value.trim()};
+      var bP;
+      if(el.dataset.id){ /* birthdays 表没有 updated_at 列（冒烟踩坑 PGRST204），PATCH 不带 */
+        bP=api('PATCH','birthdays?id=eq.'+el.dataset.id,bPayload,'return=minimal');
+      }else{
+        bPayload.family_id=AUTH.fid;
+        bPayload.created_by=AUTH.me;
+        bP=api('POST','birthdays',bPayload,'return=minimal');
+      }
+      run(bP,function(){closeSheet();toast('记下了 · '+bName+' '+bdLabel(bPayload))});
+      break;
+    }
+    case 'bdDel':
+      if(armBtn(el))return;
+      run(api('DELETE','birthdays?id=eq.'+el.dataset.id),function(){closeSheet();toast('已删除')});
+      break;
+    case 'bdGift':{
+      var bg=bdById(el.dataset.id);
+      if(!bg)break;
+      run(api('POST','shopping',{family_id:AUTH.fid,name:'给'+bg.name+'的生日礼物',note:bdLabel(bg),done:false,created_by:AUTH.me},'return=minimal'),
+        function(){toast('已放进清单 · 给'+bg.name+'的生日礼物')});
+      break;
+    }
 
     /* 卧室 · 生理期 */
     case 'ptab':
@@ -2046,6 +2288,10 @@ document.addEventListener('click',function(e){
   }
   if(group.id==='pWho')periodCheckExisting(); /* 记一笔：换人后重新检查该天是否已记录 */
   if(group.id==='eKind')UI.eKindSel=ch.dataset.k; /* 书房：记住当前选的类型（取消新增时恢复） */
+  if(group.id==='bCal'){ /* 生日：切农历/公历后重排月日选项（已选的月保留，日越界自动收拢） */
+    UI.bCal=ch.dataset.cal;
+    bdSelRender();
+  }
   if(group.id==='eDateQuick'){ /* 书房：快捷日期同步写进日期输入框 */
     var edi=document.getElementById('eDate');
     if(edi)edi.value=ch.dataset.d||'';
