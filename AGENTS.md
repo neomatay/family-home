@@ -92,7 +92,7 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 - 提醒规则：≤14 天进「该备礼物了」（列表橙色 + 首页 alert），当天首页「今天 XX 生日」+ 玄关门牌计数加一。礼物按钮把「给XX的生日礼物」POST 进 `shopping`（note 里带上农历/公历生日原文）。
 - 玄关视图是双 tab（清单|生日，`.ltab`）。**与厨房 `.ktab` 同样式但独立绑定**：厨房的 ktab 是页面加载时直挂 addEventListener（改 `UI.ktab`），`.ltab` 走 `data-act="ltab"` 委托 —— 别共用类名，否则厨房的监听会误绑玄关按钮。
 
-## 厨房 · 预定（reservations，v0.6.1）
+## 厨房 · 预定（reservations，v0.6.1）与「别人也会做」（dishes，v0.6.2）
 
 预定从「今天/明天/后天三选一 + 具体时间」改成**任意日期 + 餐段**：
 
@@ -100,6 +100,11 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 - 弹层：快捷日期 seg（今天/明天/后天，`#resDateQuick`）只是往 `#resDate` date input 里写值，**保存以输入框为准**（手动改日期不回写快捷按钮，和书房 eDateQuick 同一套路）。
 - 排序：`openRes()` 按 date 再按 `MEAL_RANK`（早→午→晚→宵）——**不是字符串序**（'夜宵' 的 Unicode 序比 '晚餐' 靠前会排错）。sync 的 GET 只 `order=date.asc`，餐段序由前端补。
 - 首页「今晚吃什么」卡片的 eyebrow 随最近预定的餐段变（`晚餐吃什么`/`早餐吃什么`…），when 行 = dateLabel + 餐段 + 谁做。
+
+菜的「别人也会做」（朋友自带/朋友掌勺，v0.6.2）：
+
+- `dishes.guest_cooks text`：逗号分隔的朋友标签，`parseGuests()` 去重/单个≤12字/最多8个。与 `cooks`（bigint[]，家人 member id）**并列两套**，别混存 —— `guest_cooks` 不是 member id，预定/接单（`reservations.cook_id`）不引用它，它只是菜单菜片上的「会做」小标签。
+- 缓存守卫把 `D.dishes[*].guests` 补齐为 `[]`（旧 localStorage 里的菜没有这个字段）。
 
 ## 营养估算
 
