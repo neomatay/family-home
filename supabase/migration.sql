@@ -272,3 +272,26 @@ create policy "birthday all" on public.birthdays for all
   with check (family_id = public.current_family_id());
 
 create index on public.birthdays (family_id);
+
+-- ============================================================
+-- v0.6.1（2026-11-12）：reservations —— 预定改「任意日期 + 餐段」
+-- 原来只能选今天/明天/后天，且记具体时间（18:30）；现在日期随便
+-- 选，时间改成餐段 meal（早餐/午餐/晚餐/夜宵）。time 列删除。
+-- 已有行（如果将来有人带着旧数据跑这段）：按"几点算哪顿"归到
+-- 餐段 —— <05:00 夜宵（凌晨） / <10:00 早餐 / <15:00 午餐 /
+-- <21:00 晚餐 / 其余 夜宵。
+-- ============================================================
+
+alter table public.reservations add column if not exists meal text not null default '晚餐'
+  check (meal in ('早餐','午餐','晚餐','夜宵'));
+
+update public.reservations set meal = case
+  when time < '05:00' then '夜宵'
+  when time < '10:00' then '早餐'
+  when time < '15:00' then '午餐'
+  when time < '21:00' then '晚餐'
+  else '夜宵'
+end
+where time is not null;
+
+alter table public.reservations drop column if exists time;
