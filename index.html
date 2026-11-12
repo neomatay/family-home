@@ -1193,7 +1193,7 @@ function renderKitchen(){
       var cookHtml=cook
         ?'<span class="res-cook">'+avHtml(cook,21)+esc(cook.name)+' 做</span>'
         :'<span class="res-cook"><span class="waiting">待接单</span><button class="btn ghost small" data-act="take" data-id="'+r.id+'">我来做</button></span>';
-      return '<div class="card">'+
+      return '<div class="card" data-act="editRes" data-id="'+r.id+'">'+
         '<div class="res-date">'+dateLabel(r.date)+' · '+esc(r.meal||'晚餐')+'</div>'+
         '<div class="dish-name display">'+esc(di.name)+'</div>'+
         '<div class="res-row">'+cookHtml+
@@ -1508,23 +1508,29 @@ function dishSheet(id){
   );
 }
 
-function resSheet(dishId){
+function resSheet(dishId,res){ /* res 传入 = 改预定（预填日期/餐段/谁做），不传 = 新预定 */
   var d=dish(dishId);
-  openSheet(shHead('预定 · '+esc(d.name))+
+  var rDate=res?res.date:todayIso();
+  var rMeal=res?res.meal:'晚餐';
+  var rCook=res?res.cook:null;
+  openSheet(shHead((res?'改预定 · ':'预定 · ')+esc(d.name))+
     '<div class="flabel">哪天</div><div class="seg2" id="resDateQuick">'+
-    [0,1,2].map(function(n){return '<button data-d="'+isoAdd(n)+'" class="'+(n===0?'on':'')+'">'+['今天','明天','后天'][n]+'</button>'}).join('')+
+    [0,1,2].map(function(n){
+      var iso=isoAdd(n);
+      return '<button data-d="'+iso+'" class="'+(iso===rDate?'on':'')+'">'+['今天','明天','后天'][n]+'</button>';
+    }).join('')+
     '</div>'+
-    '<input class="finput" id="resDate" type="date" value="'+todayIso()+'" min="1900-01-01" style="max-width:180px;margin-top:8px">'+
+    '<input class="finput" id="resDate" type="date" value="'+esc(rDate)+'" min="1900-01-01" style="max-width:180px;margin-top:8px">'+
     '<div class="flabel">哪顿</div><div class="seg2" id="resMeal">'+
-    MEALS.map(function(m){return '<button data-m="'+m+'" class="'+(m==='晚餐'?'on':'')+'">'+m+'</button>'}).join('')+'</div>'+
+    MEALS.map(function(m){return '<button data-m="'+m+'" class="'+(m===rMeal?'on':'')+'">'+m+'</button>'}).join('')+'</div>'+
     '<div class="flabel">谁做</div><div class="mchips" id="resCook">'+
-    '<span class="mchip on" data-mid=""><span class="waiting" style="color:var(--dot-on);font-weight:500">待接单</span></span>'+
+    '<span class="mchip'+(rCook?'':' on')+'" data-mid=""><span class="waiting" style="color:var(--dot-on);font-weight:500">待接单</span></span>'+
     D.members.map(function(m){
       var can=(d.cooks||[]).indexOf(m.id)>=0;
-      return '<span class="mchip'+(can?'':' off')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+(can?' · 会做':'')+'</span>';
+      return '<span class="mchip'+(rCook===m.id?' on':'')+(can?'':' off')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+(can?' · 会做':'')+'</span>';
     }).join('')+'</div>'+
     '<div class="hint">保存时会自动查冰箱：缺的原料直接进购物清单（两人手机都能看到）。</div>'+
-    '<div class="sh-actions"><button class="btn" data-act="saveRes" data-id="'+d.id+'">预定</button></div>'
+    '<div class="sh-actions"><button class="btn" data-act="saveRes" data-id="'+d.id+'" data-rid="'+(res?res.id:'')+'">'+(res?'改好':'预定')+'</div>'
   );
 }
 
@@ -1880,6 +1886,10 @@ document.addEventListener('click',function(e){
     /* 预定 */
     case 'saveRes':
       saveRes(el);
+      break;
+    case 'editRes': /* 点预定卡片 → 改日期/餐段/谁做 */
+      var _r=resById(el.dataset.id);
+      if(_r)resSheet(_r.dishId,_r);
       break;
 
     /* 库存 */
@@ -2258,12 +2268,15 @@ function saveRes(el){
   var cook=cookBtn?cookBtn.dataset.mid:null;
   cook=cook?parseInt(cook,10):null;
   var d1=dish(el.dataset.id);
-  run(api('POST','reservations',{family_id:AUTH.fid,dish_id:d1.id,date:date,meal:meal,cook_id:cook,created_by:AUTH.me},'return=minimal')
-    .then(function(){return checkInv(d1)}).then(function(missing){
-      closeSheet();UI.view='kitchen';UI.ktab='res';
-      render();
-      toast(missing.length?('已预定 · 缺 '+missing.length+' 样原料，已进购物清单'):'已预定 · 冰箱里原料都齐');
-    }));
+  var rid=el.dataset.rid;
+  var p=rid
+    ?api('PATCH','reservations?id=eq.'+rid,{date:date,meal:meal,cook_id:cook},'return=minimal') /* 改预定：只改日期/餐段/谁做 */
+    :api('POST','reservations',{family_id:AUTH.fid,dish_id:d1.id,date:date,meal:meal,cook_id:cook,created_by:AUTH.me},'return=minimal');
+  run(p.then(function(){return checkInv(d1)}).then(function(missing){
+    closeSheet();UI.view='kitchen';UI.ktab='res';
+    render();
+    toast(rid?('改好了 · '+dateLabel(date)+' '+meal):(missing.length?('已预定 · 缺 '+missing.length+' 样原料，已进购物清单'):'已预定 · 冰箱里原料都齐'));
+  }));
 }
 
 function saveInv(el){
