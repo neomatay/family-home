@@ -295,3 +295,13 @@ end
 where time is not null;
 
 alter table public.reservations drop column if exists time;
+
+-- ============================================================
+-- v0.6.2（2026-11-12）：dishes —— 「别人也会做」（朋友自带/掌勺）
+-- 家人之外的会做者用自由文本标签存这一列（逗号分隔，去重、
+-- 单个 ≤12 字、最多 8 个由前端保证），与 cooks(bigint[] 家人
+-- member id) 并列。预定/接单流程不涉及该列 —— 它只是菜单上的
+-- 标注，让「朋友自带」的菜不用硬塞进家人会做名单。
+-- ============================================================
+
+alter table public.dishes add column if not exists guest_cooks text not null default '';
