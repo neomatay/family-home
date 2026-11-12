@@ -846,7 +846,7 @@ function sync(initial){
     api('GET','members?select=*&order=sort.asc'),
     api('GET','dishes?select=*&order=created_at.asc'),
     api('GET','inventory?select=*&order=id.asc'),
-    api('GET','reservations?select=*&order=date.asc,time.asc'),
+    api('GET','reservations?select=*&order=date.asc'),
     api('GET','shopping?select=*&order=id.asc'),
     /* periods 表若尚未建（v0.3 SQL 未跑），容错为空，不影响其他功能 */
     api('GET','periods?select=*&order=start_date.desc').catch(function(){return null}),
@@ -865,7 +865,7 @@ function sync(initial){
       nutri:d.nutri,est:!!d.est,cooks:d.cooks||[],times:d.times_cooked||0,created_by:d.created_by
     }});
     D.inv=rs[3].map(function(i){return {id:i.id,name:i.name,cat:i.cat,qty:Number(i.qty),unit:i.unit,low:Number(i.low)}});
-    D.res=rs[4].map(function(r){return {id:r.id,dishId:r.dish_id,date:r.date,time:r.time,cook:r.cook_id}});
+    D.res=rs[4].map(function(r){return {id:r.id,dishId:r.dish_id,date:r.date,meal:r.meal||'晚餐',cook:r.cook_id}});
     D.shop=rs[5];
     D.periods=(rs[6]||[]).map(function(p){return {id:p.id,member:p.member_id,date:p.start_date,note:p.note||''}});
     D.events=(rs[7]||[]).map(function(e){return {id:e.id,title:e.title,kind:e.kind,date:e.event_date||'',seg:e.time_seg||'',status:e.status,rating:e.rating,member:e.member_id,note:e.note||''}});
@@ -952,8 +952,14 @@ function checkInv(d){
 function lowCount(cat){
   var n=0;D.inv.forEach(function(it){if(it.cat===cat&&it.qty<it.low)n++});return n;
 }
+var MEALS=['早餐','午餐','晚餐','夜宵'];
+var MEAL_RANK={'早餐':0,'午餐':1,'晚餐':2,'夜宵':3};
+function mealRank(m){return (MEAL_RANK[m]!==undefined&&MEAL_RANK[m]!==null)?MEAL_RANK[m]:2} /* 未知值按晚餐排 */
 function openRes(){
-  return D.res.slice().sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time)});
+  return D.res.slice().sort(function(a,b){
+    var c=(a.date||'').localeCompare(b.date||'');
+    return c||mealRank(a.meal)-mealRank(b.meal);
+  });
 }
 
 /* ---------- 渲染 ---------- */
@@ -1081,9 +1087,9 @@ function renderHome(){
     var di=dish(res.dishId);
     var cook=res.cook?member(res.cook):null;
     tc.innerHTML=
-      '<div class="eyebrow">今晚吃什么</div>'+
+      '<div class="eyebrow">'+esc(res.meal||'晚餐')+'吃什么</div>'+
       '<div class="row1"><div class="dish display">'+esc(di?di.name:'?')+'</div>'+
-      '<div class="when">'+dateLabel(res.date)+' '+esc(res.time)+' · <b>'+(cook?esc(cook.name)+'做':'待接单')+'</b></div></div>';
+      '<div class="when">'+dateLabel(res.date)+' '+esc(res.meal||'')+' · <b>'+(cook?esc(cook.name)+'做':'待接单')+'</b></div></div>';
   }else{
     tc.innerHTML='<div class="eyebrow">今晚吃什么</div><div class="row1"><div class="dish display" style="font-size:17px;color:var(--ink2)">还没定 · 去菜单里挑一道？</div></div>';
   }
@@ -1166,7 +1172,7 @@ function renderKitchen(){
   }else{
     var list=openRes();
     if(!list.length){
-      body.innerHTML='<div class="empty">近期没有预定<br>去菜单里挑一道，选个时间</div>';
+      body.innerHTML='<div class="empty">近期没有预定<br>去菜单里挑一道，选个日子和餐段</div>';
       return;
     }
     body.innerHTML=list.map(function(r){
@@ -1177,7 +1183,7 @@ function renderKitchen(){
         ?'<span class="res-cook">'+avHtml(cook,21)+esc(cook.name)+' 做</span>'
         :'<span class="res-cook"><span class="waiting">待接单</span><button class="btn ghost small" data-act="take" data-id="'+r.id+'">我来做</button></span>';
       return '<div class="card">'+
-        '<div class="res-date">'+dateLabel(r.date)+' · '+esc(r.time)+'</div>'+
+        '<div class="res-date">'+dateLabel(r.date)+' · '+esc(r.meal||'晚餐')+'</div>'+
         '<div class="dish-name display">'+esc(di.name)+'</div>'+
         '<div class="res-row">'+cookHtml+
         '<span class="res-acts"><button class="btn small" data-act="cooked" data-id="'+r.id+'">做好了</button>'+
@@ -1491,10 +1497,12 @@ function dishSheet(id){
 function resSheet(dishId){
   var d=dish(dishId);
   openSheet(shHead('预定 · '+esc(d.name))+
-    '<div class="flabel">哪天</div><div class="seg2" id="resDate">'+
-    [0,1,2].map(function(n){return '<button data-d="'+n+'" class="'+(n===0?'on':'')+'">'+dateLabel(isoAdd(n))+'</button>'}).join('')+
+    '<div class="flabel">哪天</div><div class="seg2" id="resDateQuick">'+
+    [0,1,2].map(function(n){return '<button data-d="'+isoAdd(n)+'" class="'+(n===0?'on':'')+'">'+dateLabel(isoAdd(n))+'</button>'}).join('')+
     '</div>'+
-    '<div class="flabel">时间</div><input class="finput" id="resTime" type="time" value="18:30" style="max-width:140px">'+
+    '<input class="finput" id="resDate" type="date" value="'+todayIso()+'" min="1900-01-01" style="max-width:180px;margin-top:8px">'+
+    '<div class="flabel">哪顿</div><div class="seg2" id="resMeal">'+
+    MEALS.map(function(m){return '<button data-m="'+m+'" class="'+(m==='晚餐'?'on':'')+'">'+m+'</button>'}).join('')+'</div>'+
     '<div class="flabel">谁做</div><div class="mchips" id="resCook">'+
     '<span class="mchip on" data-mid=""><span class="waiting" style="color:var(--dot-on);font-weight:500">待接单</span></span>'+
     D.members.map(function(m){
@@ -2227,14 +2235,14 @@ function saveDish(el){
 }
 
 function saveRes(el){
-  var dateBtn=document.querySelector('#resDate .on');
-  var date=isoAdd(parseInt(dateBtn.dataset.d,10)||0);
-  var time=document.getElementById('resTime').value||'18:30';
+  var date=document.getElementById('resDate').value||todayIso();
+  var mealBtn=document.querySelector('#resMeal .on');
+  var meal=mealBtn?mealBtn.dataset.m:'晚餐';
   var cookBtn=document.querySelector('#resCook .on');
   var cook=cookBtn?cookBtn.dataset.mid:null;
   cook=cook?parseInt(cook,10):null;
   var d1=dish(el.dataset.id);
-  run(api('POST','reservations',{family_id:AUTH.fid,dish_id:d1.id,date:date,time:time,cook_id:cook,created_by:AUTH.me},'return=minimal')
+  run(api('POST','reservations',{family_id:AUTH.fid,dish_id:d1.id,date:date,meal:meal,cook_id:cook,created_by:AUTH.me},'return=minimal')
     .then(function(){return checkInv(d1)}).then(function(missing){
       closeSheet();UI.view='kitchen';UI.ktab='res';
       render();
@@ -2295,6 +2303,10 @@ document.addEventListener('click',function(e){
   if(group.id==='eDateQuick'){ /* 书房：快捷日期同步写进日期输入框 */
     var edi=document.getElementById('eDate');
     if(edi)edi.value=ch.dataset.d||'';
+  }
+  if(group.id==='resDateQuick'){ /* 预定：快捷日期同步写进日期输入框（手动改输入框不回写，保存以输入框为准） */
+    var rdi=document.getElementById('resDate');
+    if(rdi)rdi.value=ch.dataset.d||'';
   }
 });
 
