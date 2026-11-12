@@ -1498,7 +1498,7 @@ function resSheet(dishId){
   var d=dish(dishId);
   openSheet(shHead('预定 · '+esc(d.name))+
     '<div class="flabel">哪天</div><div class="seg2" id="resDateQuick">'+
-    [0,1,2].map(function(n){return '<button data-d="'+isoAdd(n)+'" class="'+(n===0?'on':'')+'">'+dateLabel(isoAdd(n))+'</button>'}).join('')+
+    [0,1,2].map(function(n){return '<button data-d="'+isoAdd(n)+'" class="'+(n===0?'on':'')+'">'+['今天','明天','后天'][n]+'</button>'}).join('')+
     '</div>'+
     '<input class="finput" id="resDate" type="date" value="'+todayIso()+'" min="1900-01-01" style="max-width:180px;margin-top:8px">'+
     '<div class="flabel">哪顿</div><div class="seg2" id="resMeal">'+
