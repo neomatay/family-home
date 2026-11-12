@@ -1495,13 +1495,13 @@ function dishSheet(id){
       '<div><label>脂肪 g</label><input class="finput" id="nF" type="number" inputmode="numeric" value="'+(d&&d.nutri?d.nutri.f:'')+'"></div>'+
     '</div>'+
     '<div style="margin-top:9px"><button class="btn ghost small" data-act="estNutri">估一估营养</button></div>'+
-    '<div class="flabel">谁会做</div><div class="mchips" id="cookChips">'+
+    '<div class="flabel">谁会做（家人）</div><div class="mchips" id="cookChips">'+
     D.members.map(function(m){
       return '<span class="mchip'+(cooks.indexOf(m.id)>=0?' on':'')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+'</span>';
     }).join('')+'</div>'+
-    '<div class="flabel">别人也会做（朋友自带/朋友掌勺）</div>'+
-    '<input class="finput" id="dGuests" value="'+esc(d?(d.guests||[]).join('，'):'')+'" placeholder="比如：小王、楼下阿姨（逗号隔开）">'+
-    '<div class="hint">朋友名字随便写，逗号隔开就行；会出现在菜片的「会做」旁边。</div>'+
+    '<div class="flabel">不是家人做的？写朋友名字</div>'+
+    '<input class="finput" id="dGuests" value="'+esc(d?(d.guests||[]).join('，'):'')+'" placeholder="比如：小王（自带）、楼下阿姨">'+
+    '<div class="hint">朋友做的菜写这里，上面的家人就不用勾了；多个朋友用逗号隔开。朋友不会进家庭，只是这道菜的做法归他。</div>'+
     '<div class="hint">按材料份量本地估算（常见食材库），正式版将接入真实 AI 估算。</div>'+
     '<div class="sh-actions"><button class="btn" data-act="saveDish" data-id="'+(d?d.id:'')+'">保存</button></div>'+
     (d?'<div class="sh-actions" style="margin-top:9px"><button class="btn danger" data-act="delDish" data-id="'+d.id+'" data-armed="0">删除这道菜</button></div>':'')
@@ -2227,13 +2227,15 @@ function saveDish(el){
   document.querySelectorAll('#cookChips .mchip').forEach(function(ch){
     if(ch.classList.contains('on'))cooks.push(parseInt(ch.dataset.mid,10));
   });
-  if(!cooks.length)cooks=[AUTH.me];
+  var guests=parseGuests(document.getElementById('dGuests').value);
+  /* 只有既没勾家人也没写朋友时才默认自己 —— 纯朋友的菜不硬塞上传者 */
+  if(!cooks.length&&!guests.length)cooks=[AUTH.me];
   var n={k:parseInt(document.getElementById('nK').value,10)||0,
          p:parseInt(document.getElementById('nP').value,10)||0,
          c:parseInt(document.getElementById('nC').value,10)||0,
          f:parseInt(document.getElementById('nF').value,10)||0};
   var sv=parseInt(document.getElementById('dServ').value,10)||2;
-  var payload={name:name,servings:sv,ingredients:ings,nutri:n,est:true,cooks:cooks,guest_cooks:parseGuests(document.getElementById('dGuests').value).join(',')};
+  var payload={name:name,servings:sv,ingredients:ings,nutri:n,est:true,cooks:cooks,guest_cooks:guests.join(',')};
   var p;
   if(el.dataset.id){
     p=api('PATCH','dishes?id=eq.'+el.dataset.id,payload,'return=minimal');
