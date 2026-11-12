@@ -101,9 +101,10 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 - 排序：`openRes()` 按 date 再按 `MEAL_RANK`（早→午→晚→宵）——**不是字符串序**（'夜宵' 的 Unicode 序比 '晚餐' 靠前会排错）。sync 的 GET 只 `order=date.asc`，餐段序由前端补。
 - 首页「今晚吃什么」卡片的 eyebrow 随最近预定的餐段变（`晚餐吃什么`/`早餐吃什么`…），when 行 = dateLabel + 餐段 + 谁做。
 
-菜的「别人也会做」（朋友自带/朋友掌勺，v0.6.2）：
+菜的「谁会做」（v0.6.2）：
 
-- `dishes.guest_cooks text`：逗号分隔的朋友标签，`parseGuests()` 去重/单个≤12字/最多8个。与 `cooks`（bigint[]，家人 member id）**并列两套**，别混存 —— `guest_cooks` 不是 member id，预定/接单（`reservations.cook_id`）不引用它，它只是菜单菜片上的「会做」小标签。
+- 语义：一道菜的会做者**要么是家人、要么是朋友（自带/掌勺）**，朋友不进家庭 —— 家庭成员只有真正输邀请码进来的人。纯朋友的菜 `cooks=[]` + `guest_cooks` 有值，**别硬塞上传者**（saveDish 只在两者都空时才默认自己）。
+- `dishes.guest_cooks text`：逗号分隔的朋友标签，`parseGuests()` 去重/单个≤12字/最多8个。与 `cooks`（bigint[]，家人 member id）**两套并列**，别混存 —— `guest_cooks` 不是 member id，预定/接单（`reservations.cook_id`）不引用它，菜片上显示为 `.gchip` 文字胶囊（家人是头像）。
 - 缓存守卫把 `D.dishes[*].guests` 补齐为 `[]`（旧 localStorage 里的菜没有这个字段）。
 
 ## 营养估算
