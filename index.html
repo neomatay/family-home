@@ -140,6 +140,7 @@ svg text{user-select:none}
 .dish-bot{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .cooks{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink2)}
 .cooks .av{width:21px;height:21px;font-size:10px}
+.cooks .gchip{padding:1px 7px;border:1px solid var(--line);border-radius:10px;font-size:10.5px;line-height:1.5;white-space:nowrap}
 .res-date{font-size:11px;color:var(--dot-on);font-weight:700;letter-spacing:1px;margin-bottom:5px}
 .res-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap}
 .res-cook{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2)}
@@ -596,6 +597,14 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function member(id){for(var i=0;i<D.members.length;i++)if(D.members[i].id===id)return D.members[i];return null}
 /* 注意：data-* 传来的 id 是字符串，必须 parseInt 后再严格比较（曾因 2==="2" 导致编辑菜品打开是空的） */
 function dish(id){id=parseInt(id,10);for(var i=0;i<D.dishes.length;i++)if(D.dishes[i].id===id)return D.dishes[i];return null}
+function parseGuests(s){ /* 菜的「别人也会做」：朋友标签，逗号/顿号分隔，去重、单个≤12字、最多 8 个 */
+  var out=[],seen={};
+  String(s==null?'':s).split(/[,，、]/).forEach(function(x){
+    x=x.trim().slice(0,12);
+    if(x&&!seen[x]){seen[x]=1;out.push(x)}
+  });
+  return out.slice(0,8);
+}
 function resById(id){id=parseInt(id,10);for(var i=0;i<D.res.length;i++)if(D.res[i].id===id)return D.res[i];return null}
 function invById(id){id=parseInt(id,10);for(var i=0;i<D.inv.length;i++)if(D.inv[i].id===id)return D.inv[i];return null}
 function shopById(id){id=parseInt(id,10);for(var i=0;i<D.shop.length;i++)if(D.shop[i].id===id)return D.shop[i];return null}
@@ -603,7 +612,7 @@ function persistAuth(){try{localStorage.setItem('jia-auth-v2',JSON.stringify(AUT
 function persistCache(){try{localStorage.setItem('jia-cache-v2',JSON.stringify(D))}catch(_){}}
 
 try{AUTH=JSON.parse(localStorage.getItem('jia-auth-v2'))||null}catch(_){AUTH=null}
-try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members){D=_c;D.events=D.events||[];D.kinds=D.kinds||[];D.birthdays=D.birthdays||[]}}catch(_){}
+try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members){D=_c;D.events=D.events||[];D.kinds=D.kinds||[];D.birthdays=D.birthdays||[];D.dishes=(D.dishes||[]).map(function(d){d.guests=d.guests||[];return d})}}catch(_){}
 
 function isoAdd(days){
   var d=new Date();d.setDate(d.getDate()+days);
@@ -862,7 +871,8 @@ function sync(initial){
     D.members=rs[1];
     D.dishes=rs[2].map(function(d){return {
       id:d.id,name:d.name,servings:d.servings,ingredients:d.ingredients||[],
-      nutri:d.nutri,est:!!d.est,cooks:d.cooks||[],times:d.times_cooked||0,created_by:d.created_by
+      nutri:d.nutri,est:!!d.est,cooks:d.cooks||[],times:d.times_cooked||0,created_by:d.created_by,
+      guests:parseGuests(d.guest_cooks)
     }});
     D.inv=rs[3].map(function(i){return {id:i.id,name:i.name,cat:i.cat,qty:Number(i.qty),unit:i.unit,low:Number(i.low)}});
     D.res=rs[4].map(function(r){return {id:r.id,dishId:r.dish_id,date:r.date,meal:r.meal||'晚餐',cook:r.cook_id}});
@@ -1160,13 +1170,14 @@ function renderKitchen(){
     body.innerHTML=D.dishes.map(function(d){
       var n=d.nutri||{};
       var cooks=(d.cooks||[]).map(function(id){var m=member(id);return m?avHtml(m,21):''}).join('');
+      var gchips=(d.guests||[]).map(function(g){return '<span class="gchip">'+esc(g)+'</span>'}).join('');
       return '<div class="card" data-act="editDish" data-id="'+d.id+'">'+
         '<div class="dish-top"><div class="dish-name display">'+esc(d.name)+'</div><div class="times">做过 '+d.times+' 次</div></div>'+
         '<div class="nutri">'+
           '<span>≈ '+(n.k||0)+' kcal</span><span>蛋白 '+(n.p||0)+'g</span><span>碳水 '+(n.c||0)+'g</span><span>脂肪 '+(n.f||0)+'g</span>'+
           (d.est?'<span class="est">估算</span>':'')+
         '</div>'+
-        '<div class="dish-bot"><div class="cooks">会做 '+cooks+'</div>'+
+        '<div class="dish-bot"><div class="cooks">会做 '+cooks+gchips+'</div>'+
         '<button class="btn small" data-act="res" data-id="'+d.id+'">预定</button></div></div>';
     }).join('');
   }else{
@@ -1488,6 +1499,9 @@ function dishSheet(id){
     D.members.map(function(m){
       return '<span class="mchip'+(cooks.indexOf(m.id)>=0?' on':'')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+'</span>';
     }).join('')+'</div>'+
+    '<div class="flabel">别人也会做（朋友自带/朋友掌勺）</div>'+
+    '<input class="finput" id="dGuests" value="'+esc(d?(d.guests||[]).join('，'):'')+'" placeholder="比如：小王、楼下阿姨（逗号隔开）">'+
+    '<div class="hint">朋友名字随便写，逗号隔开就行；会出现在菜片的「会做」旁边。</div>'+
     '<div class="hint">按材料份量本地估算（常见食材库），正式版将接入真实 AI 估算。</div>'+
     '<div class="sh-actions"><button class="btn" data-act="saveDish" data-id="'+(d?d.id:'')+'">保存</button></div>'+
     (d?'<div class="sh-actions" style="margin-top:9px"><button class="btn danger" data-act="delDish" data-id="'+d.id+'" data-armed="0">删除这道菜</button></div>':'')
@@ -2219,7 +2233,7 @@ function saveDish(el){
          c:parseInt(document.getElementById('nC').value,10)||0,
          f:parseInt(document.getElementById('nF').value,10)||0};
   var sv=parseInt(document.getElementById('dServ').value,10)||2;
-  var payload={name:name,servings:sv,ingredients:ings,nutri:n,est:true,cooks:cooks};
+  var payload={name:name,servings:sv,ingredients:ings,nutri:n,est:true,cooks:cooks,guest_cooks:parseGuests(document.getElementById('dGuests').value).join(',')};
   var p;
   if(el.dataset.id){
     p=api('PATCH','dishes?id=eq.'+el.dataset.id,payload,'return=minimal');
