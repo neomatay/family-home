@@ -98,6 +98,7 @@ RLS 校验：每个请求带 `x-family-id` + `x-family-code` 两个头，服务�
 
 - 字段：`date`（date）+ `meal`（text，check 约束 `'早餐'/'午餐'/'晚餐'/'夜宵'`）+ `cook_id`（可空 = 待接单）。**`time` 列已删**（v0.6.1 迁移按"几点算哪顿"归档了旧值），POST/PATCH 别再发 `time`。
 - 弹层：快捷日期 seg（今天/明天/后天，`#resDateQuick`）只是往 `#resDate` date input 里写值，**保存以输入框为准**（手动改日期不回写快捷按钮，和书房 eDateQuick 同一套路）。
+- **改预定**：点预定卡片本体（`editRes`）复用同一弹层（`resSheet(dishId,res)` 第二参预填日期/餐段/谁做），按钮带 `data-rid` → saveRes 走 PATCH 只改 `date/meal/cook_id`，不发 `family_id/dish_id/created_by`；卡片上的 做好了/取消/我来做 按钮有自己的 data-act，不会被卡片热区吞掉。
 - 排序：`openRes()` 按 date 再按 `MEAL_RANK`（早→午→晚→宵）——**不是字符串序**（'夜宵' 的 Unicode 序比 '晚餐' 靠前会排错）。sync 的 GET 只 `order=date.asc`，餐段序由前端补。
 - 首页「今晚吃什么」卡片的 eyebrow 随最近预定的餐段变（`晚餐吃什么`/`早餐吃什么`…），when 行 = dateLabel + 餐段 + 谁做。
 
