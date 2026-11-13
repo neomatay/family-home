@@ -1542,11 +1542,14 @@ function resSheet(dishId,res){ /* res 传入 = 改预定（预填日期/餐段/�
     '<div class="sh-actions"><button class="btn" data-act="saveRes" data-id="'+d.id+'" data-rid="'+(res?res.id:'')+'">'+(res?'改好':'预定')+'</div>'
   );
   var rdi=document.getElementById('resDate');
-  rdi.addEventListener('change',function(){ /* 手选日期 → 快捷键高亮跟着走，选了快捷键外的日子就都不亮，输入框才是准的 */
+  var syncResQuick=function(){ /* 手选日期 → 快捷键高亮跟着走，选了快捷键外的日子就都不亮，输入框才是准的 */
     document.querySelectorAll('#resDateQuick button').forEach(function(b){
       b.classList.toggle('on',b.dataset.d===rdi.value);
     });
-  });
+  };
+  /* input：手机滚轮滚动中就同步；change：桌面日历/失焦兜底 */
+  rdi.addEventListener('input',syncResQuick);
+  rdi.addEventListener('change',syncResQuick);
 }
 
 function invSheet(id){
