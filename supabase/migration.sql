@@ -305,3 +305,12 @@ alter table public.reservations drop column if exists time;
 -- ============================================================
 
 alter table public.dishes add column if not exists guest_cooks text not null default '';
+
+-- ============================================================
+-- v0.6.3（2026-11-13）：reservations —— 预定可以直接派给朋友
+-- 菜是朋友做的（dishes.guest_cooks）时，预定默认就是那个朋友做，
+-- 不再「待接单」。朋友是文本（guest_cook），与 cook_id（家人）
+-- 互斥：前端约定两者同时最多一个有值。
+-- ============================================================
+
+alter table public.reservations add column if not exists guest_cook text not null default '';
