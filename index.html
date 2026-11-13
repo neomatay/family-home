@@ -612,7 +612,7 @@ function persistAuth(){try{localStorage.setItem('jia-auth-v2',JSON.stringify(AUT
 function persistCache(){try{localStorage.setItem('jia-cache-v2',JSON.stringify(D))}catch(_){}}
 
 try{AUTH=JSON.parse(localStorage.getItem('jia-auth-v2'))||null}catch(_){AUTH=null}
-try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members){D=_c;D.events=D.events||[];D.kinds=D.kinds||[];D.birthdays=D.birthdays||[];D.dishes=(D.dishes||[]).map(function(d){d.guests=d.guests||[];return d})}}catch(_){}
+try{var _c=JSON.parse(localStorage.getItem('jia-cache-v2'));if(_c&&_c.members){D=_c;D.events=D.events||[];D.kinds=D.kinds||[];D.birthdays=D.birthdays||[];D.dishes=(D.dishes||[]).map(function(d){d.guests=d.guests||[];return d});D.res=(D.res||[]).map(function(r){r.guest=r.guest||'';return r})}}catch(_){}
 
 function isoAdd(days){
   var d=new Date();d.setDate(d.getDate()+days);
@@ -875,7 +875,7 @@ function sync(initial){
       guests:parseGuests(d.guest_cooks)
     }});
     D.inv=rs[3].map(function(i){return {id:i.id,name:i.name,cat:i.cat,qty:Number(i.qty),unit:i.unit,low:Number(i.low)}});
-    D.res=rs[4].map(function(r){return {id:r.id,dishId:r.dish_id,date:r.date,meal:r.meal||'晚餐',cook:r.cook_id}});
+    D.res=rs[4].map(function(r){return {id:r.id,dishId:r.dish_id,date:r.date,meal:r.meal||'晚餐',cook:r.cook_id,guest:r.guest_cook||''}});
     D.shop=rs[5];
     D.periods=(rs[6]||[]).map(function(p){return {id:p.id,member:p.member_id,date:p.start_date,note:p.note||''}});
     D.events=(rs[7]||[]).map(function(e){return {id:e.id,title:e.title,kind:e.kind,date:e.event_date||'',seg:e.time_seg||'',status:e.status,rating:e.rating,member:e.member_id,note:e.note||''}});
@@ -1099,7 +1099,7 @@ function renderHome(){
     tc.innerHTML=
       '<div class="eyebrow">'+esc(res.meal||'晚餐')+'吃什么</div>'+
       '<div class="row1"><div class="dish display">'+esc(di?di.name:'?')+'</div>'+
-      '<div class="when">'+dateLabel(res.date)+' '+esc(res.meal||'')+' · <b>'+(cook?esc(cook.name)+'做':'待接单')+'</b></div></div>';
+      '<div class="when">'+dateLabel(res.date)+' '+esc(res.meal||'')+' · <b>'+(cook?esc(cook.name)+'做':(res.guest?esc(res.guest)+'做':'待接单'))+'</b></div></div>';
   }else{
     tc.innerHTML='<div class="eyebrow">今晚吃什么</div><div class="row1"><div class="dish display" style="font-size:17px;color:var(--ink2)">还没定 · 去菜单里挑一道？</div></div>';
   }
@@ -1190,9 +1190,12 @@ function renderKitchen(){
       var di=dish(r.dishId);
       if(!di)return '';
       var cook=r.cook?member(r.cook):null;
+      var guest=r.guest||'';
       var cookHtml=cook
         ?'<span class="res-cook">'+avHtml(cook,21)+esc(cook.name)+' 做</span>'
-        :'<span class="res-cook"><span class="waiting">待接单</span><button class="btn ghost small" data-act="take" data-id="'+r.id+'">我来做</button></span>';
+        :guest
+          ?'<span class="res-cook">'+esc(guest)+' 做</span>'
+          :'<span class="res-cook"><span class="waiting">待接单</span><button class="btn ghost small" data-act="take" data-id="'+r.id+'">我来做</button></span>';
       return '<div class="card" data-act="editRes" data-id="'+r.id+'">'+
         '<div class="res-date">'+dateLabel(r.date)+' · '+esc(r.meal||'晚餐')+'</div>'+
         '<div class="dish-name display">'+esc(di.name)+'</div>'+
@@ -1513,6 +1516,9 @@ function resSheet(dishId,res){ /* res 传入 = 改预定（预填日期/餐段/�
   var rDate=res?res.date:todayIso();
   var rMeal=res?res.meal:'晚餐';
   var rCook=res?res.cook:null;
+  var rGuest=res?res.guest:'';
+  /* 新预定：菜是朋友做的 → 默认第一个朋友做（可换）；家人菜默认待接单 */
+  if(!res&&!rCook&&(d.guests||[]).length)rGuest=d.guests[0];
   openSheet(shHead((res?'改预定 · ':'预定 · ')+esc(d.name))+
     '<div class="flabel">哪天</div><div class="seg2" id="resDateQuick">'+
     [0,1,2].map(function(n){
@@ -1524,10 +1530,13 @@ function resSheet(dishId,res){ /* res 传入 = 改预定（预填日期/餐段/�
     '<div class="flabel">哪顿</div><div class="seg2" id="resMeal">'+
     MEALS.map(function(m){return '<button data-m="'+m+'" class="'+(m===rMeal?'on':'')+'">'+m+'</button>'}).join('')+'</div>'+
     '<div class="flabel">谁做</div><div class="mchips" id="resCook">'+
-    '<span class="mchip'+(rCook?'':' on')+'" data-mid=""><span class="waiting" style="color:var(--dot-on);font-weight:500">待接单</span></span>'+
+    '<span class="mchip'+((rCook||rGuest)?'':' on')+'" data-mid=""><span class="waiting" style="color:var(--dot-on);font-weight:500">待接单</span></span>'+
     D.members.map(function(m){
       var can=(d.cooks||[]).indexOf(m.id)>=0;
       return '<span class="mchip'+(rCook===m.id?' on':'')+(can?'':' off')+'" data-mid="'+m.id+'">'+avHtml(m,23)+esc(m.name)+(can?' · 会做':'')+'</span>';
+    }).join('')+
+    (d.guests||[]).map(function(g){
+      return '<span class="mchip'+(rGuest===g?' on':'')+'" data-gid="'+esc(g)+'">'+esc(g)+' · 朋友</span>';
     }).join('')+'</div>'+
     '<div class="hint">保存时会自动查冰箱：缺的原料直接进购物清单（两人手机都能看到）。</div>'+
     '<div class="sh-actions"><button class="btn" data-act="saveRes" data-id="'+d.id+'" data-rid="'+(res?res.id:'')+'">'+(res?'改好':'预定')+'</div>'
@@ -1850,7 +1859,7 @@ document.addEventListener('click',function(e){
     case 'res':resSheet(el.dataset.id);break;
     case 'take':
       var me=member(AUTH.me);
-      run(api('PATCH','reservations?id=eq.'+el.dataset.id,{cook_id:AUTH.me},'return=minimal'),
+      run(api('PATCH','reservations?id=eq.'+el.dataset.id,{cook_id:AUTH.me,guest_cook:''},'return=minimal'), /* 家人接单时清掉朋友派单 */
         '接单了 · '+(me?me.name:'')+'来做');
       break;
     case 'cooked':
@@ -2265,13 +2274,14 @@ function saveRes(el){
   var mealBtn=document.querySelector('#resMeal .on');
   var meal=mealBtn?mealBtn.dataset.m:'晚餐';
   var cookBtn=document.querySelector('#resCook .on');
-  var cook=cookBtn?cookBtn.dataset.mid:null;
-  cook=cook?parseInt(cook,10):null;
+  var cook=cookBtn?(cookBtn.dataset.mid||null):null;
+  var guest=cookBtn?(cookBtn.dataset.gid||''):'';
+  cook=cook?parseInt(cook,10):null; /* 选了朋友 → cook_id 空、guest_cook 是名字，两者互斥 */
   var d1=dish(el.dataset.id);
   var rid=el.dataset.rid;
   var p=rid
-    ?api('PATCH','reservations?id=eq.'+rid,{date:date,meal:meal,cook_id:cook},'return=minimal') /* 改预定：只改日期/餐段/谁做 */
-    :api('POST','reservations',{family_id:AUTH.fid,dish_id:d1.id,date:date,meal:meal,cook_id:cook,created_by:AUTH.me},'return=minimal');
+    ?api('PATCH','reservations?id=eq.'+rid,{date:date,meal:meal,cook_id:cook,guest_cook:guest},'return=minimal') /* 改预定：只改日期/餐段/谁做 */
+    :api('POST','reservations',{family_id:AUTH.fid,dish_id:d1.id,date:date,meal:meal,cook_id:cook,guest_cook:guest,created_by:AUTH.me},'return=minimal');
   run(p.then(function(){return checkInv(d1)}).then(function(missing){
     closeSheet();UI.view='kitchen';UI.ktab='res';
     render();
